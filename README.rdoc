@@ -1,19 +1,19 @@
 = rubabel
 
-Description goes here.
+Ruby interface to the openbabel ruby bindings (or the openbabel gem).  The
+interface attempts to be a ruby-ish analogue of the {pybel
+interface}[http://openbabel.org/docs/current/UseTheLibrary/Python_PybelAPI.html].
 
-== Contributing to rubabel
+== Examples
+
+    Rubabel.foreach("file.sdf") do |mol|
+      print mol.write  # -> canonical smiles: "smiles_string\tname\n"
+      puts mol  # .to_s -> canonical smiles string with no name or newline
+      puts mol.exact_mass
+    end
+
+    uniq_atom_types = Rubabel.foreach("file.mol").map(&:type).uniq
  
-* Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
-* Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it.
-* Fork the project.
-* Start a feature/bugfix branch.
-* Commit and push until you are happy with your contribution.
-* Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
-* Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
-
 == Copyright
 
-Copyright (c) 2012 John Prince. See LICENSE.txt for
-further details.
-
+MIT License.  See LICENSE for further details.
