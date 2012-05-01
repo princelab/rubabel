@@ -10,7 +10,8 @@ Jeweler::Tasks.new do |gem|
   gem.homepage = "http://github.com/princelab/rubabel"
   gem.license = "MIT"
   gem.summary = %Q{Ruby interface to the OpenBabel ruby bindings similar to pybel}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.description = %Q{Ruby interface to the openbabel ruby bindings (or the openbabel gem).  The
+interface attempts to be a ruby-ish analogue of pybel.}
   gem.email = "jtprince@gmail.com"
   gem.authors = ["John T. Prince"]
   [

@@ -1,8 +1,8 @@
 = rubabel
 
 Ruby interface to the openbabel ruby bindings (or the openbabel gem).  The
-interface attempts to be a ruby-ish analogue of the {pybel
-interface}[http://openbabel.org/docs/current/UseTheLibrary/Python_PybelAPI.html].
+interface attempts to be a ruby-ish analogue of
+{pybel}[http://openbabel.org/docs/current/UseTheLibrary/Python_PybelAPI.html].
 
 == Examples
 
@@ -13,6 +13,12 @@ interface}[http://openbabel.org/docs/current/UseTheLibrary/Python_PybelAPI.html]
     end
 
     uniq_atom_types = Rubabel.foreach("file.mol").map(&:type).uniq
+
+== Installing
+
+
+
+    gem install rubabel
  
 == Copyright
 
