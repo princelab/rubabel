@@ -16,9 +16,36 @@ interface attempts to be a ruby-ish analogue of
 
 == Installing
 
+=== Install openbabel
 
+First, make sure you have the ruby openbabel bindings properly installed.  You can do this by {properly installing the gem][https://github.com/amaunz/openbabel-gem].  Alternatively, you can following these instructions to build from source:
+
+1. download openbabel 
+2. swap out Init_OpenBabel for Init_openbabel in scripts/ruby/openbabel-ruby.cpp (see here[http://forums.openbabel.org/Ruby-Open-Babel-in-2-1-1-td957640.html]).  Some versions have this fixed already, apparently.
+3. make sure you have the right {dependencies to compile}(http://openbabel.org/docs/2.3.1/Installation/install.html#compiling-open-babel)
+
+Here's a complete example of compiling for a single user on Ubuntu 11.10 and probably will be generally forward compatible for some time.  This will compile bindings on whichever ruby comes up with '/usr/bin/env ruby':
+
+    # install the dependencies:
+    sudo apt-get install libeigen2-dev cmake libwxgtk2.8-dev libxml2-dev libcairo2-dev
+    # unpack it:
+    tar -xzvf openbabel-2.3.1.tar.gz
+    # swap out buggy lines in ruby bindings:
+    sed -i 's/Init_OpenBabel/Init_openbabel/g' openbabel-2.3.1/scripts/ruby/openbabel-ruby.cpp
+    # make a separate build directory for building in:
+    mkdir build-rvmruby1.9.3
+    cd build-rvmruby1.9.3
+    mkdir ~/tools
+    cmake ../openbabel-2.3.1 -DRUBY_BINDINGS=ON -DCMAKE_INSTALL_PREFIX=~/tools/openbabel-rvmruby1.9.3
+    make && make install
+
+=== Install the gem
 
     gem install rubabel
+
+Assuming you have the {dependencies for the openbabel gem}[https://github.com/amaunz/openbabel-gem], you could install in one go like this:
+
+    gem install openbabel rubabel
  
 == Copyright
 
