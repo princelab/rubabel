@@ -1,10 +1,9 @@
 require 'spec_helper'
 
-require 'rubabel/pm'
-require 'rubabel/molecule'
+require 'rubabel/atom'
 
-describe Rubabel::Molecule do
-  subject { Rubabel::Molecule.from_file( TESTFILES + '/cholesterol.sdf' ) }
+describe Rubabel::Atom do
+  subject { Rubabel::Molecule.from_file( TESTFILES + '/cholesterol.sdf' ).atoms.first }
 
   attributes = {
     charge: 0,

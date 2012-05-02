@@ -2,6 +2,7 @@ require 'openbabel'
 require 'rubabel'
 
 module Rubabel
+  # yet to implement: 
   class Molecule
     include Enumerable
     attr_accessor :obmol
@@ -16,7 +17,6 @@ module Rubabel
       end
     end
 
-
     def initialize(obmol, obconv=nil)
       @obconv = obconv
       @obmol = obmol
@@ -28,6 +28,16 @@ module Rubabel
 
     def charge=(v)
       @obmol.set_total_charge(v)
+    end
+
+    def spin
+      @obmol.get_total_spin_multiplicity
+    end
+
+    # returns an array of OpenBabel::OBRing objects.  In the future will
+    # probably return a Rubabel::Ring class (still needs to be created)
+    def sssr
+      @obmol.get_sssr.to_a
     end
 
     def exact_mass
@@ -44,13 +54,11 @@ module Rubabel
       @obmol.get_exact_mass
     end
 
-    # Not yet properly implemented.  Currently returns an object of type
-    # SWIG::TYPE_p_std__vectorT_double_p_std__allocatorT_double_p_t_t
-    def conformers
-      vec = @obmol.get_conformers
-      vec.methods - Object.new.methods
-      abort 'here'
-    end
+    #def conformers
+      # Currently returns an object of type
+      # SWIG::TYPE_p_std__vectorT_double_p_std__allocatorT_double_p_t_t
+      #vec = @obmol.get_conformers
+    #end
 
     def add_h!
       @obmol.add_hydrogens
@@ -65,7 +73,8 @@ module Rubabel
       @obmol.separate
     end
 
-    # returns a string representation of the molecular formula
+    # returns a string representation of the molecular formula.  Not sensitive
+    # to add_h!
     def formula
       @obmol.get_formula
     end
@@ -76,14 +85,24 @@ module Rubabel
       self.write_string(:can) == other.write_string(:can)
     end
 
+    # iterates over the molecule's Rubabel::Atom objects
     def each_atom(&block)
-      # could use the native iterator in the future
+      # could use the C++ iterator in the future
       block or return enum_for(__method__)
       (1..@obmol.num_atoms).each do |n|
-        block.call( @obmol.get_atom(n) )
+        block.call( Rubabel::Atom.new(@obmol.get_atom(n)) )
       end
     end
     alias_method :each, :each_atom
+
+    # iterates over the molecule's Rubabel::Bond objects
+    def each_bond(&block)
+      # could use the C++ iterator in the future
+      block or return enum_for(__method__)
+      (1..@obmol.num_bonds).each do |n|
+        block.call( Rubabel::Bond.new(@obmol.get_bond(n)) )
+      end
+    end
 
     # returns the array of atoms. Consider using #each
     def atoms
@@ -105,10 +124,10 @@ module Rubabel
     #def descs
     #end
 
-    def fingerprint(type='FP2')
-    end
-
-    alias_method :calc_fp, :fingerprint
+    # TODO: implement
+    #def fingerprint(type='FP2')
+    #end
+    #alias_method :calc_fp, :fingerprint
 
     # emits smiles without the trailing tab, newline, or id.  Use write_string
     # to get the default OpenBabel behavior (ie., tabs and newlines).
@@ -123,6 +142,7 @@ module Rubabel
       end
     end
 
+    # sensitive to add_h!
     def num_atoms() @obmol.num_atoms  end
     def num_bonds() @obmol.num_bonds  end
     def num_hvy_atoms() @obmol.num_hvy_atoms  end
