@@ -1,7 +1,16 @@
 require 'matrix'
 
+require 'rubabel/bond'
+
+class OpenBabel::OBAtom
+  def upcast
+    Rubabel::Atom.new(self)
+  end
+end
+
 module Rubabel
   class Atom
+    include Enumerable
 
     attr_accessor :obatom
 
@@ -15,6 +24,37 @@ module Rubabel
 
     def id=(val)
       @obatom.set_id(val)
+    end
+
+    def each_bond(&block)
+      block or return enum_for(__method__)
+      iter = @obatom.begin_bonds
+      while (_bond = @obatom.next_bond(iter))
+        block.call _bond.upcast
+      end
+    end
+
+    alias_method :each, :each_bond
+
+    # returns the bonds.  Consider using each_bond.
+    def bonds
+      each_bond.map.to_a
+    end
+
+    # iterates through each neighboring atom
+    def each_atom(&block)
+      block or return enum_for(__method__)
+      iter = @obatom.begin_bonds
+      _atom = @obatom.begin_nbr_atom(iter)
+      while _atom
+        block.call _atom.upcast
+        _atom = @obatom.next_nbr_atom(iter)
+      end
+    end
+
+    # returns the neighboring atoms.  Consider using each_atom.
+    def atoms
+      each_atom.map.to_a
     end
 
     def atomic_mass
@@ -32,6 +72,7 @@ module Rubabel
     def formal_charge
       @obatom.get_formal_charge
     end
+    alias_method :charge, :formal_charge
 
     def heavy_valence
       @obatom.get_heavy_valence
@@ -45,14 +86,10 @@ module Rubabel
       @obatom.get_hybridization
     end
 
-    def bonds
-      ################## cast..
-      @obatom.get_bonds
-    end
 
     # returns the next Rubabel::Atom in the molecule
     def next_atom
-      Rubabel::Atom.new(@obatom.get_next_atom)
+      @obatom.get_next_atom.upcast
     end
 
     # index of the atom (begins with 1)
@@ -99,6 +136,15 @@ module Rubabel
       # would like to implement with get_coordinate
       Vector[@obatom.get_x, @obatom.get_y, @obatom.get_z]
     end
+
+    def method_missing(methd, *args, &block)
+      if @obatom.respond_to?(methd)
+        @obatom.send(methd, *args, &block)
+      else
+        super(methd, *args, &block)
+      end
+    end
+
 
   end
 end

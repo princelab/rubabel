@@ -1,6 +1,12 @@
 require 'openbabel'
 require 'rubabel'
 
+class OpenBabel::OBMol
+  def upcast
+    Rubabel::Molecule.new(self)
+  end
+end
+
 module Rubabel
   # yet to implement: 
   class Molecule
@@ -90,7 +96,7 @@ module Rubabel
       # could use the C++ iterator in the future
       block or return enum_for(__method__)
       (1..@obmol.num_atoms).each do |n|
-        block.call( Rubabel::Atom.new(@obmol.get_atom(n)) )
+        block.call( @obmol.get_atom(n).upcast )
       end
     end
     alias_method :each, :each_atom
@@ -100,8 +106,13 @@ module Rubabel
       # could use the C++ iterator in the future
       block or return enum_for(__method__)
       (1..@obmol.num_bonds).each do |n|
-        block.call( Rubabel::Bond.new(@obmol.get_bond(n)) )
+        block.call( @obmol.get_bond(n).upcast )
       end
+    end
+
+    # returns the array of bonds.  Consider using #each_bond
+    def bonds
+      each_bond.map.to_a
     end
 
     # returns the array of atoms. Consider using #each
@@ -153,6 +164,14 @@ module Rubabel
       @obconv ||= OpenBabel::OBConversion.new
       @obconv.set_out_format(type.to_s)
       @obconv.write_string(@obmol)
+    end
+
+    def method_missing(methd, *args, &block)
+      if @obmol.respond_to?(methd)
+        @obmol.send(methd, *args, &block)
+      else
+        super(methd, *args, &block)
+      end
     end
 
   end

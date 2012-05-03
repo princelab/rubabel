@@ -1,0 +1,337 @@
+************************************************************
+OpenBabel
+************************************************************
+to_angle_data: -1
+to_atom_class_data: -1
+to_chiral_data: -1
+to_comment_data: -1
+to_conformer_data: -1
+to_external_bond_data: -1
+to_grid_data: -1
+to_matrix_data: -1
+to_nasa_thermo_data: -1
+to_pair_data: -1
+to_rate_data: -1
+to_rotamer_list: -1
+to_rotation_data: -1
+to_serial_nums: -1
+to_set_data: -1
+to_symmetry_data: -1
+to_torsion_data: -1
+to_unit_cell: -1
+to_vector_data: -1
+to_vibration_data: -1
+to_virtual_bond: -1
+double_multiply: -1
+double_add: -1
+double_modulus: -1
+rotate_coords: -1
+calc_rms: -1
+<<: -1
++: -1
+-: -1
+/: -1
+*: -1
+dot: -1
+cross: -1
+vector_angle: -1
+calc_torsion_angle: -1
+point_2plane_signed: -1
+point_2plane: -1
+point_2plane_angle: -1
+point_2line: -1
+VZero: 0
+VX: 0
+VY: 0
+VZ: 0
+obrelease_version: -1
+obErrorLog: 0
+obErrorLog=: 1
+Residue: 0
+Residue=: 1
+ElemDesc: 0
+ElemDesc=: 1
+ResNo: 0
+ResNo=: 1
+ElemNo: 0
+ElemNo=: 1
+throw_error: -1
+cartesian_to_internal: -1
+internal_to_cartesian: -1
+new_extension: -1
+etab: 0
+etab=: 1
+ttab: 0
+ttab=: 1
+isotab: 0
+isotab=: 1
+aromtyper: 0
+aromtyper=: 1
+atomtyper: 0
+atomtyper=: 1
+chainsparser: 0
+chainsparser=: 1
+resdat: 0
+resdat=: 1
+NoId: 0
+get_rmat: -1
+ob_make_rmat: -1
+qtrfit: -1
+superimpose: -1
+compare_ring_size: -1
+smarts_lex_replace: -1
+AliasDataType: 0
+tanimoto: -1
+***[OpenBabel::VectorUnsignedInt NO METHODS]***
+***[OpenBabel::VectorInt NO METHODS]***
+***[OpenBabel::Iterator NO METHODS]***
+***[OpenBabel::ConstIterator NO METHODS]***
+***[OpenBabel::GCVALUE NO METHODS]***
+***[OpenBabel::OBTorsion NO METHODS]***
+***[OpenBabel::OBSymmetryData NO METHODS]***
+***[OpenBabel::OBConformerData NO METHODS]***
+***[OpenBabel::OBUnitCell NO METHODS]***
+***[OpenBabel::OBRingData NO METHODS]***
+***[OpenBabel::OBVirtualBond NO METHODS]***
+***[OpenBabel::OBSetData NO METHODS]***
+***[OpenBabel::OBPairData NO METHODS]***
+***[OpenBabel::OBExternalBondData NO METHODS]***
+***[OpenBabel::OBExternalBond NO METHODS]***
+***[OpenBabel::OBCommentData NO METHODS]***
+************************************************************
+OpenBabel::OBAtom
+************************************************************
+class_description: -1
+***[OpenBabel::OBInternalCoord NO METHODS]***
+***[OpenBabel::LineSearchType NO METHODS]***
+************************************************************
+OpenBabel::OBDescriptor
+************************************************************
+default: -1
+find_type: -1
+filter_compare: -1
+add_properties: -1
+delete_properties: -1
+get_values: -1
+get_identifier: -1
+get_plugin: -1
+list_as_vector: -1
+list: -1
+list_as_string: -1
+first_line: -1
+begin: -1
+end: -1
+***[OpenBabel::FastSearchIndexer NO METHODS]***
+***[OpenBabel::FastSearch NO METHODS]***
+***[OpenBabel::FptIndexHeader NO METHODS]***
+************************************************************
+OpenBabel::OBFingerprint
+************************************************************
+default: -1
+find_type: -1
+tanimoto: -1
+getbitsperint: -1
+find_fingerprint: -1
+get_plugin: -1
+list_as_vector: -1
+list: -1
+list_as_string: -1
+first_line: -1
+begin: -1
+end: -1
+***[OpenBabel::OBAtomClassData NO METHODS]***
+************************************************************
+OpenBabel::AliasData
+************************************************************
+revert_to_alias_form: -1
+***[OpenBabel::OBMolRingIter NO METHODS]***
+***[OpenBabel::OBMolPairIter NO METHODS]***
+***[OpenBabel::OBMolTorsionIter NO METHODS]***
+***[OpenBabel::OBMolAngleIter NO METHODS]***
+***[OpenBabel::OBResidueAtomIter NO METHODS]***
+***[OpenBabel::OBResidueIter NO METHODS]***
+***[OpenBabel::OBAtomBondIter NO METHODS]***
+***[OpenBabel::OBAtomAtomIter NO METHODS]***
+***[OpenBabel::OBMolBondIter NO METHODS]***
+***[OpenBabel::OBMolBondBFSIter NO METHODS]***
+***[OpenBabel::OBMolAtomBFSIter NO METHODS]***
+***[OpenBabel::OBMolAtomDFSIter NO METHODS]***
+***[OpenBabel::OBMolAtomIter NO METHODS]***
+***[OpenBabel::OBRotamerList NO METHODS]***
+***[OpenBabel::OBRotorKeys NO METHODS]***
+***[OpenBabel::RotorDigit NO METHODS]***
+***[OpenBabel::OBRotorList NO METHODS]***
+***[OpenBabel::OBRotor NO METHODS]***
+***[OpenBabel::OBRotorRules NO METHODS]***
+***[OpenBabel::OBRotorRule NO METHODS]***
+***[OpenBabel::OBBitVec NO METHODS]***
+************************************************************
+OpenBabel::OBOp
+************************************************************
+default: -1
+find_type: -1
+op_options: -1
+do_ops: -1
+get_plugin: -1
+list_as_vector: -1
+list: -1
+list_as_string: -1
+first_line: -1
+begin: -1
+end: -1
+************************************************************
+OpenBabel::OBBuilder
+************************************************************
+get_new_bond_vector: -1
+connect: -1
+swap: -1
+correct_stereo_bonds: -1
+correct_stereo_atoms: -1
+is_spiro_atom: -1
+get_fragment: -1
+add_nbrs: -1
+************************************************************
+OpenBabel::OBForceField
+************************************************************
+default: -1
+find_type: -1
+find_force_field: -1
+ignore_calculation: -1
+vector_bond_derivative: -1
+vector_distance_derivative: -1
+vector_length_derivative: -1
+vector_angle_derivative: -1
+vector_oopderivative: -1
+vector_torsion_derivative: -1
+vector_subtract: -1
+vector_add: -1
+vector_divide: -1
+vector_multiply: -1
+vector_self_multiply: -1
+vector_normalize: -1
+vector_copy: -1
+vector_length: -1
+vector_distance: -1
+vector_angle: -1
+vector_torsion: -1
+vector_oop: -1
+vector_clear: -1
+vector_dot: -1
+vector_cross: -1
+print_vector: -1
+get_plugin: -1
+list_as_vector: -1
+list: -1
+list_as_string: -1
+first_line: -1
+begin: -1
+end: -1
+***[OpenBabel::OBFFConstraints NO METHODS]***
+***[OpenBabel::OBFFConstraint NO METHODS]***
+***[OpenBabel::OBFFCalculation4 NO METHODS]***
+***[OpenBabel::OBFFCalculation3 NO METHODS]***
+***[OpenBabel::OBFFCalculation2 NO METHODS]***
+***[OpenBabel::OBFFParameter NO METHODS]***
+***[OpenBabel::OBSSMatch NO METHODS]***
+***[OpenBabel::OBSmartsMatcher NO METHODS]***
+***[OpenBabel::OBSmartsPattern NO METHODS]***
+***[OpenBabel::OBRTree NO METHODS]***
+***[OpenBabel::OBRingSearch NO METHODS]***
+***[OpenBabel::OBRing NO METHODS]***
+************************************************************
+OpenBabel::OBMol
+************************************************************
+class_description: -1
+************************************************************
+OpenBabel::OBBond
+************************************************************
+class_description: -1
+************************************************************
+OpenBabel::OBResidue
+************************************************************
+class_description: -1
+************************************************************
+OpenBabel::OBConversion
+************************************************************
+register_format: -1
+find_format: -1
+format_from_ext: -1
+format_from_mime: -1
+get_next_format: -1
+description: -1
+register_option_param: -1
+get_option_params: -1
+get_default_format: -1
+************************************************************
+OpenBabel::OBFormat
+************************************************************
+default: -1
+find_type: -1
+format_from_mime: -1
+get_plugin: -1
+list_as_vector: -1
+list: -1
+list_as_string: -1
+first_line: -1
+begin: -1
+end: -1
+***[OpenBabel::ObLogBuf NO METHODS]***
+***[OpenBabel::OBMessageHandler NO METHODS]***
+***[OpenBabel::OBError NO METHODS]***
+***[OpenBabel::Stringbuf NO METHODS]***
+************************************************************
+OpenBabel::OBPlugin
+************************************************************
+get_plugin: -1
+list_as_vector: -1
+list: -1
+list_as_string: -1
+first_line: -1
+begin: -1
+end: -1
+***[OpenBabel::CharPtrLess NO METHODS]***
+***[OpenBabel::Dummy NO METHODS]***
+***[OpenBabel::OBGridData NO METHODS]***
+***[OpenBabel::OBMatrixData NO METHODS]***
+***[OpenBabel::OBVectorData NO METHODS]***
+***[OpenBabel::OBRotationData NO METHODS]***
+***[OpenBabel::OBElectronicTransitionData NO METHODS]***
+***[OpenBabel::OBOrbitalData NO METHODS]***
+***[OpenBabel::OBOrbital NO METHODS]***
+***[OpenBabel::OBDOSData NO METHODS]***
+***[OpenBabel::OBVibrationData NO METHODS]***
+***[OpenBabel::OBSerialNums NO METHODS]***
+***[OpenBabel::OBChiralData NO METHODS]***
+***[OpenBabel::OBAngleData NO METHODS]***
+***[OpenBabel::OBAngle NO METHODS]***
+***[OpenBabel::OBTorsionData NO METHODS]***
+************************************************************
+OpenBabel::OBBase
+************************************************************
+class_description: -1
+***[OpenBabel::OBGenericData NO METHODS]***
+************************************************************
+OpenBabel::Matrix3x3
+************************************************************
+jacobi: -1
+***[OpenBabel::Vector3 NO METHODS]***
+***[OpenBabel::OBSqrtTbl NO METHODS]***
+***[OpenBabel::OBStopwatch NO METHODS]***
+***[OpenBabel::OBRandom NO METHODS]***
+***[OpenBabel::DoubleType NO METHODS]***
+***[OpenBabel::OBResidueData NO METHODS]***
+***[OpenBabel::OBTypeTable NO METHODS]***
+***[OpenBabel::OBIsotopeTable NO METHODS]***
+***[OpenBabel::OBElementTable NO METHODS]***
+***[OpenBabel::OBElement NO METHODS]***
+***[OpenBabel::OBGlobalDataBase NO METHODS]***
+***[OpenBabel::VectorpOBGenericData NO METHODS]***
+***[OpenBabel::VectorpOBRing NO METHODS]***
+***[OpenBabel::VectorOBRing NO METHODS]***
+***[OpenBabel::VectorOBResidue NO METHODS]***
+***[OpenBabel::VectorOBBond NO METHODS]***
+***[OpenBabel::VectorOBMol NO METHODS]***
+***[OpenBabel::VectorVector3 NO METHODS]***
+***[OpenBabel::VectorString NO METHODS]***
+***[OpenBabel::VectorDouble NO METHODS]***
+***[OpenBabel::VectorVInt NO METHODS]***

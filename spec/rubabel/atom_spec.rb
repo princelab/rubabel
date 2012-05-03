@@ -1,5 +1,6 @@
 require 'spec_helper'
 
+require 'rubabel/molecule'
 require 'rubabel/atom'
 
 describe Rubabel::Atom do
@@ -7,24 +8,32 @@ describe Rubabel::Atom do
 
   attributes = {
     charge: 0,
-    formula: "C27H46O",
-    dim: 2,
-    spin: 1,
+    id: 0,
+    spin: 0,
   }.each do |methd, exp|
     it "has #{methd}" do
       subject.send(methd).should == exp
     end
   end
 
-  it 'num_atoms, atoms and each_atom are sensitive to #add_h!' do
-    subject.num_atoms.should == 33
-    subject.add_h!
-    subject.num_atoms.should == 74
+  it 'can get the bonds' do
+    atom = subject
+    atom.each_bond do |bond|
+      bond.should be_a(Rubabel::Bond)
+    end
+    # is this correct???
+    atom.bonds.size.should == 3
+    warn 'warn: not sure if correct'
   end
-  it 'calculates #sssr (smallest set of smallest rings)' do
-    ar = subject.sssr
-    ar.should be_an(Array)
-    # in the future should be Rubabel::Ring
-    ar.first.should be_a(OpenBabel::OBRing)
+
+  it 'can get the neighboring atoms' do
+    atom = subject
+    atom.each_atom do |nbr_atom|
+      nbr_atom.should be_a(Rubabel::Atom)
+      nbr_atom.obatom.equal?(atom.obatom).should be_false
+    end
+    # is this correct???
+    atom.atoms.size.should == 4
+    warn 'warn: not sure if correct'
   end
 end
