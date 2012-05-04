@@ -1,5 +1,7 @@
 require 'openbabel'
 require 'rubabel'
+require 'rubabel/atom'
+require 'rubabel/bond'
 
 class OpenBabel::OBMol
   def upcast
@@ -23,9 +25,38 @@ module Rubabel
       end
     end
 
+    DEFAULT_OUT_TYPE = :can
+
     def initialize(obmol, obconv=nil)
       @obconv = obconv
       @obmol = obmol
+    end
+
+    # returns a list of atom indices matching the patterns (corresponds to
+    # the OBSmartsPattern::GetUMapList() method)
+    def smarts_indices(smarts_or_string)
+      pattern = smarts_or_string.is_a?(Rubabel::Smarts) ? smarts_or_string : Rubabel::Smarts.new(smarts_or_string)
+      pattern.obsmarts.match(@obmol)
+      pattern.obsmarts.get_umap_list.to_a
+    end
+
+    # yields atom arrays matching the pattern.  returns an enumerator if no
+    # block is given
+    def each_match(smarts_or_string, &block)
+      block or return enum_for(__method__, smarts_or_string)
+      smarts_indices(smarts_or_string).each do |ar|
+        block.call( ar.map {|i| @obmol.get_atom(i).upcast } )
+      end
+    end
+
+    # returns an array of matching atom sets.  Consider using each_match.
+    def matches(smarts_or_string)
+      each_match(smarts_or_string).map.to_a
+    end
+
+    def matches?(smarts_or_string)
+      # TODO: probably a more efficient way to do this using API
+      smarts_indices(smarts_or_string).size > 0
     end
 
     def charge
@@ -40,9 +71,8 @@ module Rubabel
       @obmol.get_total_spin_multiplicity
     end
 
-    # returns an array of OpenBabel::OBRing objects.  In the future will
-    # probably return a Rubabel::Ring class (still needs to be created)
-    def sssr
+    # returns an array of OpenBabel::OBRing objects.
+    def ob_sssr
       @obmol.get_sssr.to_a
     end
 
@@ -85,6 +115,16 @@ module Rubabel
       @obmol.get_formula
     end
 
+    # returns just the smiles string (not the id)
+    def smiles
+      to_s(:smi)
+    end
+
+    # returns just the smiles string (not the id)
+    def csmiles
+      to_s(:can)
+    end
+
     # equal if their canonical SMILES strings (including ID) are equal.  This
     # may become more rigorous in the future
     def ==(other)
@@ -95,8 +135,11 @@ module Rubabel
     def each_atom(&block)
       # could use the C++ iterator in the future
       block or return enum_for(__method__)
-      (1..@obmol.num_atoms).each do |n|
-        block.call( @obmol.get_atom(n).upcast )
+      iter = @obmol.begin_atoms
+      atom = @obmol.begin_atom(iter)
+      while atom
+        block.call atom.upcast
+        atom = @obmol.next_atom(iter)
       end
     end
     alias_method :each, :each_atom
@@ -105,9 +148,13 @@ module Rubabel
     def each_bond(&block)
       # could use the C++ iterator in the future
       block or return enum_for(__method__)
-      (1..@obmol.num_bonds).each do |n|
-        block.call( @obmol.get_bond(n).upcast )
+      iter = @obmol.begin_bonds
+      obbond = @obmol.begin_bond(iter)
+      while obbond
+        block.call obbond.upcast
+        obbond = @obmol.next_bond(iter)
       end
+      self
     end
 
     # returns the array of bonds.  Consider using #each_bond
@@ -140,9 +187,16 @@ module Rubabel
     #end
     #alias_method :calc_fp, :fingerprint
 
+    def split(bond)
+      success = @obmol.delete_bond(bond.obbond)
+      @obmol.separate.map(&:upcast)
+    end
+
+    alias_method :separate, :split
+
     # emits smiles without the trailing tab, newline, or id.  Use write_string
     # to get the default OpenBabel behavior (ie., tabs and newlines).
-    def to_s(type=:can)
+    def to_s(type=DEFAULT_OUT_TYPE)
       string = write_string(type)
       case type
       when :smi, :smiles, :can
@@ -160,18 +214,31 @@ module Rubabel
     def num_residues() @obmol.num_residues  end
     def num_rotors() @obmol.num_rotors  end
 
-    def write_string(type=:can)
+    # If filename_or_type is a symbol, then it will return a string of that type.
+    # If filename_or_type is a string, will write to the filename
+    # given no args, returns a DEFAULT_OUT_TYPE string
+    def write(filename_or_type=:can)
+      if filename_or_type.is_a?(Symbol)
+        write_string(filename_or_type)
+      else
+        write_file(filename_or_type)
+      end
+    end
+
+    def write_string(type=DEFAULT_OUT_TYPE)
       @obconv ||= OpenBabel::OBConversion.new
       @obconv.set_out_format(type.to_s)
       @obconv.write_string(@obmol)
     end
 
-    def method_missing(methd, *args, &block)
-      if @obmol.respond_to?(methd)
-        @obmol.send(methd, *args, &block)
-      else
-        super(methd, *args, &block)
-      end
+    # writes to the file based on the extension
+    def write_file(filename)
+      type = Rubabel.filetype(filename)
+      File.write(filename, write_string(type))
+    end
+
+    def inspect
+      "%M{#{to_s}}>"
     end
 
   end

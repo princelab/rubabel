@@ -27,8 +27,9 @@ module Rubabel
 
     def each_atom(&block)
       block or return enum_for(__method__)
-      block.call @obbond.get_begin_atom
-      block.call @obbond.get_end_atom
+      block.call @obbond.get_begin_atom.upcast
+      block.call @obbond.get_end_atom.upcast
+      self
     end
 
     alias_method :each, :each_atom
@@ -44,12 +45,12 @@ module Rubabel
       @obbond.get_begin_atom.equal?(obatom) || @obbond.get_end_atom.equal?(obatom)
     end
 
-    def method_missing(methd, *args, &block)
-      if @obbond.respond_to?(methd)
-        @obbond.send(methd, *args, &block)
-      else
-        super(methd, *args, &block)
-      end
+    def inspect
+      "[#{atoms.map(&:inspect).join('-')}]"
+    end
+
+    # returns an array of molecules after deleting the given bond
+    def split(*bonds)
     end
 
   end

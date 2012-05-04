@@ -26,6 +26,11 @@ module Rubabel
       @obatom.set_id(val)
     end
 
+    # index of the atom (begins with 1)
+    def idx
+      @obatom.get_idx
+    end
+
     def each_bond(&block)
       block or return enum_for(__method__)
       iter = @obatom.begin_bonds
@@ -86,21 +91,6 @@ module Rubabel
       @obatom.get_hybridization
     end
 
-
-    # returns the next Rubabel::Atom in the molecule
-    def next_atom
-      @obatom.get_next_atom.upcast
-    end
-
-    # index of the atom (begins with 1)
-    def idx
-      @obatom.get_idx
-    end
-
-    def id
-      @obatom.get_id
-    end
-
     def implicit_valence
       @obatom.get_implicit_valence
     end
@@ -129,22 +119,12 @@ module Rubabel
       @obatom.get_vector
     end
 
-    #def coords
-    #end
-
     def coords
-      # would like to implement with get_coordinate
-      Vector[@obatom.get_x, @obatom.get_y, @obatom.get_z]
+      Vector[@obatom.x, @obatom.y, @obatom.z]
     end
 
-    def method_missing(methd, *args, &block)
-      if @obatom.respond_to?(methd)
-        @obatom.send(methd, *args, &block)
-      else
-        super(methd, *args, &block)
-      end
+    def inspect
+      "<#{type} id:#{id}>"
     end
-
-
   end
 end
