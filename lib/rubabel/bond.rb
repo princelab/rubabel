@@ -13,22 +13,22 @@ module Rubabel
   class Bond
     include Enumerable
 
-    attr_accessor :obbond
+    attr_accessor :ob
 
     def initialize(obbond)
-      @obbond = obbond
+      @ob = obbond
     end
 
-    # does it include the Rubabel::Atom (requires that it be holding the
-    # identical obatom, i.e. uses #equal?)
+    # considered included if the atom ids match
     def include?(atom)
-      ob_include?(atom.obatom)
+      # atoms.any? {|atm| atom.id == atm.id }
+      (@ob.get_begin_atom.get_id == atom.id) || (@ob.get_end_atom.get_id == atom.id)
     end
 
     def each_atom(&block)
       block or return enum_for(__method__)
-      block.call @obbond.get_begin_atom.upcast
-      block.call @obbond.get_end_atom.upcast
+      block.call @ob.get_begin_atom.upcast
+      block.call @ob.get_end_atom.upcast
       self
     end
 
@@ -36,21 +36,11 @@ module Rubabel
 
     # returns an array of Rubabel::Atoms
     def atoms
-      [@obbond.get_begin_atom.upcast, @obbond.get_end_atom.upcast]
-    end
-
-    # does it include the OpenBabel::OBAtom (requires identity to be equal,
-    # i.e., #equal?)
-    def ob_include?(obatom)
-      @obbond.get_begin_atom.equal?(obatom) || @obbond.get_end_atom.equal?(obatom)
+      [@ob.get_begin_atom.upcast, @ob.get_end_atom.upcast]
     end
 
     def inspect
       "[#{atoms.map(&:inspect).join('-')}]"
-    end
-
-    # returns an array of molecules after deleting the given bond
-    def split(*bonds)
     end
 
   end

@@ -12,30 +12,43 @@ module Rubabel
   class Atom
     include Enumerable
 
-    attr_accessor :obatom
+    # the OpenBabel::OBAtom object
+    attr_accessor :ob
 
     def initialize(obatom)
-      @obatom = obatom
+      @ob = obatom
     end
 
     def id
-      @obatom.get_id
+      @ob.get_id
     end
 
     def id=(val)
-      @obatom.set_id(val)
+      @ob.set_id(val)
     end
 
     # index of the atom (begins with 1)
     def idx
-      @obatom.get_idx
+      @ob.get_idx
+    end
+
+    # abbreviated name, all lowercase as a Symbol
+    def el
+      NUM_TO_EL[atomic_num]
+    end
+
+    # abbreviated name, properly capitalized and as a String
+    def element
+      NUM_TO_ELEMENT[atomic_num]
     end
 
     def each_bond(&block)
       block or return enum_for(__method__)
-      iter = @obatom.begin_bonds
-      while (_bond = @obatom.next_bond(iter))
+      iter = @ob.begin_bonds
+      _bond = @ob.begin_bond(iter)
+      while _bond
         block.call _bond.upcast
+        _bond = @ob.next_bond(iter)
       end
     end
 
@@ -49,11 +62,11 @@ module Rubabel
     # iterates through each neighboring atom
     def each_atom(&block)
       block or return enum_for(__method__)
-      iter = @obatom.begin_bonds
-      _atom = @obatom.begin_nbr_atom(iter)
+      iter = @ob.begin_bonds
+      _atom = @ob.begin_nbr_atom(iter)
       while _atom
         block.call _atom.upcast
-        _atom = @obatom.next_nbr_atom(iter)
+        _atom = @ob.next_nbr_atom(iter)
       end
     end
 
@@ -63,64 +76,64 @@ module Rubabel
     end
 
     def atomic_mass
-      @obatom.get_atomic_mass
+      @ob.get_atomic_mass
     end
 
     def atomic_num
-      @obatom.get_atomic_num
+      @ob.get_atomic_num
     end
 
     def exact_mass
-      @obatom.get_exact_mass
+      @ob.get_exact_mass
     end
 
     def formal_charge
-      @obatom.get_formal_charge
+      @ob.get_formal_charge
     end
     alias_method :charge, :formal_charge
 
     def heavy_valence
-      @obatom.get_heavy_valence
+      @ob.get_heavy_valence
     end
 
     def hetero_valence
-      @obatom.get_hetero_valence
+      @ob.get_hetero_valence
     end
 
     def hyb
-      @obatom.get_hybridization
+      @ob.get_hybridization
     end
 
     def implicit_valence
-      @obatom.get_implicit_valence
+      @ob.get_implicit_valence
     end
 
     def isotope
-      @obatom.get_isotope
+      @ob.get_isotope
     end
 
     def partial_charge
-      @obatom.get_partial_charge
+      @ob.get_partial_charge
     end
 
     def spin
-      @obatom.get_spin_multiplicity
+      @ob.get_spin_multiplicity
     end
 
     def type
-      @obatom.get_type
+      @ob.get_type
     end
 
     def valence
-      @obatom.get_valence
+      @ob.get_valence
     end
 
     def vector
-      @obatom.get_vector
+      @ob.get_vector
     end
 
     def coords
-      Vector[@obatom.x, @obatom.y, @obatom.z]
+      Vector[@ob.x, @ob.y, @ob.z]
     end
 
     def inspect

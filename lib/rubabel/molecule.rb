@@ -13,7 +13,9 @@ module Rubabel
   # yet to implement: 
   class Molecule
     include Enumerable
-    attr_accessor :obmol
+
+    # the OpenBabel::OBmol object
+    attr_accessor :ob
 
     class << self
       def from_file(file, type=nil)
@@ -29,23 +31,26 @@ module Rubabel
 
     def initialize(obmol, obconv=nil)
       @obconv = obconv
-      @obmol = obmol
+      @ob = obmol
     end
 
     # returns a list of atom indices matching the patterns (corresponds to
-    # the OBSmartsPattern::GetUMapList() method)
+    # the OBSmartsPattern::GetUMapList() method).  Note that the original
+    # GetUMapList returns atom *numbers* (i.e., the index + 1).  This method
+    # returns the zero indexed indices.
     def smarts_indices(smarts_or_string)
       pattern = smarts_or_string.is_a?(Rubabel::Smarts) ? smarts_or_string : Rubabel::Smarts.new(smarts_or_string)
-      pattern.obsmarts.match(@obmol)
-      pattern.obsmarts.get_umap_list.to_a
+      pattern.ob.match(@ob)
+      pattern.ob.get_umap_list.map {|atm_indices| atm_indices.map {|i| i - 1 } }
     end
 
     # yields atom arrays matching the pattern.  returns an enumerator if no
     # block is given
     def each_match(smarts_or_string, &block)
       block or return enum_for(__method__, smarts_or_string)
+      _atoms = self.atoms
       smarts_indices(smarts_or_string).each do |ar|
-        block.call( ar.map {|i| @obmol.get_atom(i).upcast } )
+        block.call(_atoms.values_at(*ar))
       end
     end
 
@@ -60,59 +65,59 @@ module Rubabel
     end
 
     def charge
-      @obmol.get_total_charge
+      @ob.get_total_charge
     end
 
     def charge=(v)
-      @obmol.set_total_charge(v)
+      @ob.set_total_charge(v)
     end
 
     def spin
-      @obmol.get_total_spin_multiplicity
+      @ob.get_total_spin_multiplicity
     end
 
     # returns an array of OpenBabel::OBRing objects.
     def ob_sssr
-      @obmol.get_sssr.to_a
+      @ob.get_sssr.to_a
     end
 
     def exact_mass
-      @obmol.get_exact_mass
+      @ob.get_exact_mass
     end
 
     def mol_wt
-      @obmol.get_mol_wt
+      @ob.get_mol_wt
     end
 
     alias_method :avg_mass, :mol_wt
 
     def exact_mass
-      @obmol.get_exact_mass
+      @ob.get_exact_mass
     end
 
     #def conformers
       # Currently returns an object of type
       # SWIG::TYPE_p_std__vectorT_double_p_std__allocatorT_double_p_t_t
-      #vec = @obmol.get_conformers
+      #vec = @ob.get_conformers
     #end
 
     def add_h!
-      @obmol.add_hydrogens
+      @ob.add_hydrogens
     end
     #alias_method :add_h!, :add_hydrogens!
 
     def remove_h!
-      @obmol.delete_hydrogens
+      @ob.delete_hydrogens
     end
 
     def separate!
-      @obmol.separate
+      @ob.separate
     end
 
     # returns a string representation of the molecular formula.  Not sensitive
     # to add_h!
     def formula
-      @obmol.get_formula
+      @ob.get_formula
     end
 
     # returns just the smiles string (not the id)
@@ -135,11 +140,11 @@ module Rubabel
     def each_atom(&block)
       # could use the C++ iterator in the future
       block or return enum_for(__method__)
-      iter = @obmol.begin_atoms
-      atom = @obmol.begin_atom(iter)
+      iter = @ob.begin_atoms
+      atom = @ob.begin_atom(iter)
       while atom
         block.call atom.upcast
-        atom = @obmol.next_atom(iter)
+        atom = @ob.next_atom(iter)
       end
     end
     alias_method :each, :each_atom
@@ -148,11 +153,11 @@ module Rubabel
     def each_bond(&block)
       # could use the C++ iterator in the future
       block or return enum_for(__method__)
-      iter = @obmol.begin_bonds
-      obbond = @obmol.begin_bond(iter)
+      iter = @ob.begin_bonds
+      obbond = @ob.begin_bond(iter)
       while obbond
         block.call obbond.upcast
-        obbond = @obmol.next_bond(iter)
+        obbond = @ob.next_bond(iter)
       end
       self
     end
@@ -168,7 +173,7 @@ module Rubabel
     end
 
     def dim
-      @obmol.get_dimension
+      @ob.get_dimension
     end
 
     #def each_bond(&block)
@@ -187,9 +192,15 @@ module Rubabel
     #end
     #alias_method :calc_fp, :fingerprint
 
-    def split(bond)
-      success = @obmol.delete_bond(bond.obbond)
-      @obmol.separate.map(&:upcast)
+    def split(*bonds)
+      bonds.each do |bond|
+        unless @ob.delete_bond(bond.ob, false)
+          raise "#{bond.inspect} not deleted!" 
+        end
+      end
+      frags = @ob.separate.map(&:upcast)
+      bonds.each {|bond| @ob.add_bond(bond.ob) }
+      frags
     end
 
     alias_method :separate, :split
@@ -208,11 +219,11 @@ module Rubabel
     end
 
     # sensitive to add_h!
-    def num_atoms() @obmol.num_atoms  end
-    def num_bonds() @obmol.num_bonds  end
-    def num_hvy_atoms() @obmol.num_hvy_atoms  end
-    def num_residues() @obmol.num_residues  end
-    def num_rotors() @obmol.num_rotors  end
+    def num_atoms() @ob.num_atoms  end
+    def num_bonds() @ob.num_bonds  end
+    def num_hvy_atoms() @ob.num_hvy_atoms  end
+    def num_residues() @ob.num_residues  end
+    def num_rotors() @ob.num_rotors  end
 
     # If filename_or_type is a symbol, then it will return a string of that type.
     # If filename_or_type is a string, will write to the filename
@@ -228,7 +239,7 @@ module Rubabel
     def write_string(type=DEFAULT_OUT_TYPE)
       @obconv ||= OpenBabel::OBConversion.new
       @obconv.set_out_format(type.to_s)
-      @obconv.write_string(@obmol)
+      @obconv.write_string(@ob)
     end
 
     # writes to the file based on the extension
@@ -238,7 +249,7 @@ module Rubabel
     end
 
     def inspect
-      "%M{#{to_s}}>"
+      "#<Mol #{to_s}>"
     end
 
   end

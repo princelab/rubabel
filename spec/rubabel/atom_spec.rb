@@ -28,7 +28,7 @@ describe Rubabel::Atom do
       @atom.each_bond do |bond|
         bond.should be_a(Rubabel::Bond)
       end
-      @atom.bonds.size.should == 3
+      @atom.bonds.size.should == 4
     end
 
     it 'can get the neighboring atoms' do
@@ -37,7 +37,7 @@ describe Rubabel::Atom do
       @atom.type.should == 'C3'
       @atom.each_atom do |nbr_atom|
         nbr_atom.should be_a(Rubabel::Atom)
-        nbr_atom.obatom.equal?(@atom.obatom).should be_false
+        nbr_atom.ob.equal?(@atom.ob).should be_false
       end
       @atom.atoms.size.should == 4
     end

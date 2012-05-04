@@ -3,12 +3,12 @@ require 'openbabel'
 module Rubabel
   class Smarts
     
-    attr_accessor :obsmarts
+    attr_accessor :ob
 
     def initialize(string)
       @string = string
-      @obsmarts = OpenBabel::OBSmartsPattern.new
-      if !@obsmarts.init(string)
+      @ob = OpenBabel::OBSmartsPattern.new
+      unless @ob.init(string)
         raise ArgumentError, "#{string} not a valid SMARTS string"
       end
     end
