@@ -106,6 +106,17 @@ module Rubabel
     end
     #alias_method :add_h!, :add_hydrogens!
 
+    # creates a new molecule (currently writes to smiles and uses babel
+    # commandline to get hydrogens at a given pH; this is because no pH model
+    # in ruby bindings currently).
+    def add_h_at_ph(ph=7.4)
+      # write the file with the molecule
+      self.write_file("tmp.smi")
+      system "#{Rubabel::CMD[:babel]} -i smi tmp.smi -p #{ph} -o can tmp.can"
+      Molecule.from_file("tmp.can")
+    end
+    #alias_method :add_h!, :add_hydrogens!
+
     def remove_h!
       @ob.delete_hydrogens
     end
@@ -120,7 +131,7 @@ module Rubabel
       @ob.get_formula
     end
 
-    # returns just the smiles string (not the id)
+    # returns just the smiles string :smi (not the id)
     def smiles
       to_s(:smi)
     end

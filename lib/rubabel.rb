@@ -5,6 +5,12 @@ require 'openbabel'
 end
 
 module Rubabel
+  # the command to execute the utility.  They are initialized to be eponymous.
+  CMD = {
+    babel: 'babel',
+    obabel: 'obabel',
+  }
+
   class << self
 
     # returns a hash keyed by type (Symbol) pointing to a description of the
