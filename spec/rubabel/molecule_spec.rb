@@ -36,6 +36,11 @@ describe Rubabel::Molecule do
     ar.first.should be_a(OpenBabel::OBRing)
   end
 
+  describe 'getting other descriptors' do
+
+
+  end
+
   describe 'breaking a molecule' do
     before(:each) do
       @mol =  Rubabel::Molecule.from_string("NC(=O)CO")

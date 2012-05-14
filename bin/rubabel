@@ -1,0 +1,229 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'commander/import'
+require 'rubabel'
+
+program :version, Rubabel::VERSION
+program :description, 'tools for manipulating molecules with rubabel'
+
+=begin
+    filename = filename.first unless options[:string_format]
+    mol_iter = 
+      if str_f=options[:string_format]
+        # assumes you aren't passing massive numbers of molecules as strings
+        # on the commandline
+        filename.map {|str| Rubabel.read_string(str, str_f.to_sym) }.each
+      else
+        Rubabel.foreach(ARGV.first)
+      end
+    mol_iter.each do |mol|
+      mol.add_h! unless mol.ob.has_hydrogens_added
+      mol.ob.get_title || 
+
+    end
+=end
+
+def mol_iterator(args, strings)
+  
+end
+
+
+command :babel do |c|
+  c.syntax = 'rubabel babel [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Babel
+  end
+end
+
+command :obabel do |c|
+  c.syntax = 'rubabel obabel [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Obabel
+  end
+end
+
+command :chiral do |c|
+  c.syntax = 'rubabel chiral [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Chiral
+  end
+end
+
+command :conformer do |c|
+  c.syntax = 'rubabel conformer [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Conformer
+  end
+end
+
+command :energy do |c|
+  c.syntax = 'rubabel energy [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Energy
+  end
+end
+
+command :fit do |c|
+  c.syntax = 'rubabel fit [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Fit
+  end
+end
+
+command :gen do |c|
+  c.syntax = 'rubabel gen [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Gen
+  end
+end
+
+command :grep do |c|
+  c.syntax = 'rubabel grep [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Grep
+  end
+end
+
+command :gui do |c|
+  c.syntax = 'rubabel gui [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Gui
+  end
+end
+
+command :minimize do |c|
+  c.syntax = 'rubabel minimize [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Minimize
+  end
+end
+
+command :probe do |c|
+  c.syntax = 'rubabel probe [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Probe
+  end
+end
+
+command :prop do |c|
+  c.syntax = 'rubabel prop [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Prop
+  end
+end
+
+command :probe do |c|
+  c.syntax = 'rubabel probe [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Probe
+  end
+end
+
+command :prop do |c|
+  c.syntax = 'rubabel prop [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Prop
+  end
+end
+
+command :rotamer do |c|
+  c.syntax = 'rubabel rotamer [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Rotamer
+  end
+end
+
+command :rotate do |c|
+  c.syntax = 'rubabel rotate [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Rotate
+  end
+end
+
+command :spectrophore do |c|
+  c.syntax = 'rubabel spectrophore [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Spectrophore
+  end
+end
+
+command :roundtrip do |c|
+  c.syntax = 'rubabel roundtrip [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Rubabel::Commands::Roundtrip
+  end
+end
+

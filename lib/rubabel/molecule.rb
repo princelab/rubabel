@@ -19,11 +19,11 @@ module Rubabel
 
     class << self
       def from_file(file, type=nil)
-        Rubabel.read_file(file, type)
+        Rubabel.molecule_from_file(file, type)
       end
 
       def from_string(string, type=:smi)
-        Rubabel.read_string(string, type)
+        Rubabel.molecule_from_string(string, type)
       end
     end
 

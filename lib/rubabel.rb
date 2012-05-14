@@ -25,6 +25,20 @@ module Rubabel
       @out_formats ||= formats_to_hash(OpenBabel::OBConversion.new.get_supported_output_format)
     end
 
+    # returns the format Symbol that can be used for conversion, or nil if
+    # the extension is not recognized.
+    def format_from_ext(filename)
+      obformat = OpenBabel::OBConversion.format_from_ext(filename)
+      obformat.get_id.to_sym if obformat
+    end
+
+    # returns a format Symbol that can be used for conversion, or nil if the
+    # mime-type is not recognized
+    def format_from_mime(mime_type)
+      obformat = OpenBabel::OBConversion.format_from_mime(mime_type)
+      obformat.get_id.to_sym if obformat
+    end
+
     # determines the extension from filename if type is nil
     def foreach(filename, type=nil, &block)
       block or return enum_for(__method__, filename, type)
@@ -40,24 +54,18 @@ module Rubabel
     # returns a Rubabel::Molecule (the first in the file if there are
     # multiples).  See ::foreach for accessing all molecules in a file
     # determines the type from the extension if type is nil.
-    def read_file(filename, type=nil)
+    def molecule_from_file(filename, type=nil)
       obmol = read_first_obmol(filename, type).first
       Rubabel::Molecule.new(obmol)
     end
 
     # reads one molecule from the string
-    def read_string(string, type=:smi)
+    def molecule_from_string(string, type=:smi)
       obmol = OpenBabel::OBMol.new
       obconv = OpenBabel::OBConversion.new
       obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
       success = obconv.read_string(obmol, string)
       Rubabel::Molecule.new(obmol)
-    end
-
-    # returns a filetype symbol based on the extension
-    def filetype(filename)
-      # should use the openbabel method in the future
-      File.extname(filename)[1..-1].to_sym
     end
 
     private
@@ -66,7 +74,7 @@ module Rubabel
     # but is necessary based on discrepancies between accessing the first
     # molecule and subsequent molecules.
     def read_first_obmol(filename, type=nil)
-      type ||= filetype(filename)
+      type ||= format_from_ext(filename)
       obconv = OpenBabel::OBConversion.new
       obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
       obmol = OpenBabel::OBMol.new

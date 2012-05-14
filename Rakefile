@@ -15,11 +15,17 @@ interface attempts to be a ruby-ish analogue of pybel.}
   gem.email = "jtprince@gmail.com"
   gem.authors = ["John T. Prince"]
   [
+    ["commander", "~> 4.1.2"]
+  ].each do |args|
+    gem.add_dependency(*args)
+  end
+
+  [
     ["rspec", "~> 2.8.0"], 
     ["rdoc", "~> 3.12"], 
     ["jeweler", "~> 1.8.3"]
-  ].each do |name, version_string|
-    gem.add_development_dependency(name, version_string)
+  ].each do |args|
+    gem.add_development_dependency(*args)
   end
 end
 Jeweler::RubygemsDotOrgTasks.new

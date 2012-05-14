@@ -48,17 +48,47 @@ describe Rubabel do
     end
   end
 
-  describe '::read_file and ::read_string' do
+  describe '::molecule_from_file and ::molecule_from_string' do
     before(:each) do 
       @samples = TESTFILES + "/Samples.sdf"
     end
 
     it 'return a single molecule (the first one in the file)' do
-      mol_f = Rubabel.read_file(@samples)
-      mol_s = Rubabel.read_string(IO.read(@samples), :sdf)
+      mol_f = Rubabel.molecule_from_file(@samples)
+      mol_s = Rubabel.molecule_from_string(IO.read(@samples), :sdf)
       [mol_f, mol_s].each {|mol| mol.should be_a(Rubabel::Molecule) }
       mol_f.should == mol_s
     end
+  end
+
+  describe 'can deal with .gz files properly' do
+    before(:each) do 
+      @gz_file = TESTFILES + "/Samples.sdf.gz"
+    end
+
+    it 'can get the file format' do
+      # non-existant file okay
+      Rubabel.format_from_ext("silly.sdf.gz").should == :sdf
+      Rubabel.format_from_ext(@gz_file).should == :sdf
+      Rubabel.foreach(@gz_file) do |mol|
+        mol.should be_a(Rubabel::Molecule)
+      end
+    end
+
+  end
+
+  describe 'format from extension' do
+
+    it 'determines format from extension' do
+      Rubabel.format_from_ext( TESTFILES + "/Samples.sdf" ).should == :sdf
+      Rubabel.format_from_ext( TESTFILES + "/Samples.non_existent" ).should be_nil
+    end
+
+    it 'determines format from mime-type' do
+      Rubabel.format_from_mime( "chemical/x-mdl-sdfile" ).should == :sdf
+      Rubabel.format_from_mime( "chemical/wierdness" ).should be_nil
+    end
+
   end
 
   #describe 'an atom in it' do
