@@ -9,13 +9,21 @@ class OpenBabel::OBMol
   end
 end
 
+class OpenBabelUnableToSetupForceFieldError < RuntimeError
+end
+
 module Rubabel
+  BUILDER = OpenBabel::OBBuilder.new
+  DEFAULT_FORCEFIELD = :mmff94
   # yet to implement: 
   class Molecule
     include Enumerable
 
     # the OpenBabel::OBmol object
     attr_accessor :ob
+
+    # the OpenBabel::OBConversion object
+    attr_accessor :obconv
 
     class << self
       def from_file(file, type=nil)
@@ -257,23 +265,39 @@ module Rubabel
       end
     end
 
-    # adds hydrogens if necessary
-    def local_optimize!(forcefield="mmff94", steps=500)
+    # adds hydrogens if necessary.  Performs only steepest descent
+    # optimization (no rotors optimized)
+    # returns self
+    def local_optimize!(forcefield=DEFAULT_FORCEFIELD, steps=500)
       add_h! unless hydrogens_added?
       if dim == 3
-
+        ff = OpenBabel::OBForceField.find_force_field(forcefield.to_s)
+        ff.setup(@ob) || raise(OpenBabelUnableToSetupForceFieldError)
+        ff.steepest_descent(steps)  # is the default termination count 1.0e-4 (used in obgen?)
+        ff.update_coordinates(@ob)
       else
-        make_3d!(forcefield, steps)
+        make_3d!(forcefield, steps) 
+      end
+      self
+    end
+
+    def global_optimize!(forcefield=DEFAULT_FORCEFIELD, steps=1000)
+      if dim != 3
+        # don't bother optimizing yet (steps=nil)
+        make_3d!(DEFAULT_FORCEFIELD, nil)
       end
 
     end
 
-    # does basic local optimization
-    def make_3d!(forcefield="mmff94", steps=50)
-      OpenBabel::OBBuilder.build(@ob)
-      local_optimize!(forcefield, steps)
+    # does a bit of basic local optimization unless steps is set to nil
+    # returns self
+    def make_3d!(forcefield=DEFAULT_FORCEFIELD, steps=50)
+      BUILDER.build(@ob)
+      @ob.add_hydrogens(false, true) unless hydrogens_added?
+      local_optimize!(forcefield, steps) if steps
+      self
     end
-    alias_method :make3D!, :make_3d!
+    alias_method :make3d!, :make_3d!
 
     def write_string(type=DEFAULT_OUT_TYPE)
       @obconv ||= OpenBabel::OBConversion.new

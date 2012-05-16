@@ -5,6 +5,10 @@ require 'openbabel'
 end
 
 module Rubabel
+
+  # available force-fields (would like to generate this with introspection)
+  AVAILABLE_FORCEFIELDS = [:mmff94, :ghemical, :mm2, :uff] 
+
   # the command to execute the utility.  They are initialized to be eponymous.
   CMD = {
     babel: 'babel',
@@ -47,7 +51,7 @@ module Rubabel
       (obmol, obconv, not_at_end) = read_first_obmol(filename, type)
       # the obmol is not valid if we are already at the end!
       while not_at_end
-        block.call Rubabel::Molecule.new(obmol)
+        block.call Rubabel::Molecule.new(obmol, obconv)
         obmol = OpenBabel::OBMol.new
         not_at_end = obconv.read(obmol)
       end
@@ -57,8 +61,8 @@ module Rubabel
     # multiples).  See ::foreach for accessing all molecules in a file
     # determines the type from the extension if type is nil.
     def molecule_from_file(filename, type=nil)
-      obmol = read_first_obmol(filename, type).first
-      Rubabel::Molecule.new(obmol)
+      (obmol, obconv, not_at_end) = read_first_obmol(filename, type).first
+      Rubabel::Molecule.new(obmol, obconv)
     end
 
     # reads one molecule from the string
@@ -67,7 +71,7 @@ module Rubabel
       obconv = OpenBabel::OBConversion.new
       obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
       obconv.read_string(obmol, string) || raise(ArgumentError, "invalid string" )
-      Rubabel::Molecule.new(obmol)
+      Rubabel::Molecule.new(obmol, obconv)
     end
 
     private
