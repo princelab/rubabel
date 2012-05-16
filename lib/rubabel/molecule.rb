@@ -229,6 +229,11 @@ module Rubabel
       end
     end
 
+    # returns a Rubabel::MoleculeData hash
+    def data
+      Rubabel::MoleculeData.new(@ob)
+    end
+
     # sensitive to add_h!
     def num_atoms() @ob.num_atoms  end
     def num_bonds() @ob.num_bonds  end
