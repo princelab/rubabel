@@ -32,6 +32,8 @@ module Rubabel
       obformat.get_id.to_sym if obformat
     end
 
+    alias_method :filetype, :format_from_ext
+
     # returns a format Symbol that can be used for conversion, or nil if the
     # mime-type is not recognized
     def format_from_mime(mime_type)
@@ -64,7 +66,7 @@ module Rubabel
       obmol = OpenBabel::OBMol.new
       obconv = OpenBabel::OBConversion.new
       obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
-      success = obconv.read_string(obmol, string)
+      obconv.read_string(obmol, string) || raise(ArgumentError, "invalid string" )
       Rubabel::Molecule.new(obmol)
     end
 

@@ -100,6 +100,11 @@ module Rubabel
       # SWIG::TYPE_p_std__vectorT_double_p_std__allocatorT_double_p_t_t
       #vec = @ob.get_conformers
     #end
+    
+    # are there hydrogens added yet
+    def hydrogens_added?
+      @ob.has_hydrogens_added
+    end
 
     def add_h!
       @ob.add_hydrogens
@@ -251,6 +256,24 @@ module Rubabel
         write_file(filename_or_type)
       end
     end
+
+    # adds hydrogens if necessary
+    def local_optimize!(forcefield="mmff94", steps=500)
+      add_h! unless hydrogens_added?
+      if dim == 3
+
+      else
+        make_3d!(forcefield, steps)
+      end
+
+    end
+
+    # does basic local optimization
+    def make_3d!(forcefield="mmff94", steps=50)
+      OpenBabel::OBBuilder.build(@ob)
+      local_optimize!(forcefield, steps)
+    end
+    alias_method :make3D!, :make_3d!
 
     def write_string(type=DEFAULT_OUT_TYPE)
       @obconv ||= OpenBabel::OBConversion.new

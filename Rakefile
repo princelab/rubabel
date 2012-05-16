@@ -15,6 +15,7 @@ interface attempts to be a ruby-ish analogue of pybel.}
   gem.email = "jtprince@gmail.com"
   gem.authors = ["John T. Prince"]
   [
+    ["openbabel", "~> 2.3.1.2"],
     ["commander", "~> 4.1.2"]
   ].each do |args|
     gem.add_dependency(*args)
