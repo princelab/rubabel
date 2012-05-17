@@ -8,6 +8,9 @@ module Rubabel
 
   # available force-fields (would like to generate this with introspection)
   AVAILABLE_FORCEFIELDS = [:mmff94, :ghemical, :mm2, :uff] 
+  DEFAULT_FORCEFIELD = AVAILABLE_FORCEFIELDS.first
+
+  BUILDER = OpenBabel::OBBuilder.new
 
   # the command to execute the utility.  They are initialized to be eponymous.
   CMD = {
@@ -16,6 +19,10 @@ module Rubabel
   }
 
   class << self
+
+    def force_field(type=DEFAULT_FORCEFIELD)
+      OpenBabel::OBForceField.find_force_field(type.to_s)
+    end
 
     # returns a hash keyed by type (Symbol) pointing to a description of the
     # format

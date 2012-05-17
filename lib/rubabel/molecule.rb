@@ -13,10 +13,9 @@ class OpenBabelUnableToSetupForceFieldError < RuntimeError
 end
 
 module Rubabel
-  BUILDER = OpenBabel::OBBuilder.new
-  DEFAULT_FORCEFIELD = :mmff94
-  # yet to implement: 
+    # yet to implement: 
   class Molecule
+    DEFAULT_FINGERPRINT = "FP2"
     include Enumerable
 
     # the OpenBabel::OBmol object
@@ -26,6 +25,11 @@ module Rubabel
     attr_accessor :obconv
 
     class << self
+
+      def tanimoto(mol1, mol2, type=DEFAULT_FINGERPRINT)
+        OpenBabel::OBFingerprint.tanimoto(mol1.ob_fingerprint, mol2.ob_fingerprint, type)
+      end
+
       def from_file(file, type=nil)
         Rubabel.molecule_from_file(file, type)
       end
@@ -36,6 +40,25 @@ module Rubabel
     end
 
     DEFAULT_OUT_TYPE = :can
+
+    # attributes
+    def title() @ob.get_title end
+    def title=(val) @ob.set_title(val) end
+
+    def charge() @ob.get_total_charge end
+    def charge=(v) @ob.set_total_charge(v) end
+
+    def spin() @ob.get_total_spin_multiplicity end
+
+    def mol_wt() @ob.get_mol_wt end
+    alias_method :avg_mass, :mol_wt
+
+    def exact_mass() @ob.get_exact_mass end
+
+    # returns a string representation of the molecular formula.  Not sensitive
+    # to add_h!
+    def formula() @ob.get_formula end
+
 
     def initialize(obmol, obconv=nil)
       @obconv = obconv
@@ -72,35 +95,9 @@ module Rubabel
       smarts_indices(smarts_or_string).size > 0
     end
 
-    def charge
-      @ob.get_total_charge
-    end
-
-    def charge=(v)
-      @ob.set_total_charge(v)
-    end
-
-    def spin
-      @ob.get_total_spin_multiplicity
-    end
-
     # returns an array of OpenBabel::OBRing objects.
     def ob_sssr
       @ob.get_sssr.to_a
-    end
-
-    def exact_mass
-      @ob.get_exact_mass
-    end
-
-    def mol_wt
-      @ob.get_mol_wt
-    end
-
-    alias_method :avg_mass, :mol_wt
-
-    def exact_mass
-      @ob.get_exact_mass
     end
 
     #def conformers
@@ -134,14 +131,9 @@ module Rubabel
       @ob.delete_hydrogens
     end
 
+    # calls separate on the OBMol object
     def separate!
       @ob.separate
-    end
-
-    # returns a string representation of the molecular formula.  Not sensitive
-    # to add_h!
-    def formula
-      @ob.get_formula
     end
 
     # returns just the smiles string :smi (not the id)
@@ -211,10 +203,18 @@ module Rubabel
     #def descs
     #end
 
-    # TODO: implement
-    #def fingerprint(type='FP2')
-    #end
-    #alias_method :calc_fp, :fingerprint
+    def tanimoto(other, type=DEFAULT_FINGERPRINT)
+      Rubabel::Molecule.tanimoto(self, other, type)
+    end
+
+    # returns a  std::vector<unsigned int> that can be passed directly into
+    # the OBFingerprint.tanimoto method
+    def ob_fingerprint(type=DEFAULT_FINGERPRINT)
+      fprinter = OpenBabel::OBFingerprint.find_fingerprint(type) || raise(ArgumentError, "fingerprint type not found")
+      fp = OpenBabel::VectorUnsignedInt.new
+      fprinter.get_fingerprint(@ob, fp) || raise("failed to get fingerprint for #{mol}")
+      fp
+    end
 
     def split(*bonds)
       bonds.each do |bond|
@@ -271,7 +271,7 @@ module Rubabel
     def local_optimize!(forcefield=DEFAULT_FORCEFIELD, steps=500)
       add_h! unless hydrogens_added?
       if dim == 3
-        ff = OpenBabel::OBForceField.find_force_field(forcefield.to_s)
+        ff = Rubabel.force_field(forcefield.to_s)
         ff.setup(@ob) || raise(OpenBabelUnableToSetupForceFieldError)
         ff.steepest_descent(steps)  # is the default termination count 1.0e-4 (used in obgen?)
         ff.update_coordinates(@ob)
@@ -286,7 +286,6 @@ module Rubabel
         # don't bother optimizing yet (steps=nil)
         make_3d!(DEFAULT_FORCEFIELD, nil)
       end
-
     end
 
     # does a bit of basic local optimization unless steps is set to nil

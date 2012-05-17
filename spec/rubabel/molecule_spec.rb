@@ -48,6 +48,26 @@ describe Rubabel::Molecule do
 
   end
 
+  it 'can calculate a molecular fingerprint (for similarity calcs)' do
+    # this just returns the std::vector object at the moment
+    fp = @mol.ob_fingerprint
+    # this is an array of unsigned ints that really need to be coerced into
+    # bits for further usefulness.
+    fp.to_a.should == [0, 604110848, 16777216, 0, 2147483648, 4210688, 0, 2097152, 16, 16809984, 0, 0, 1, 37756928, 32, 0, 524296, 1028, 8388612, 131072, 1073741824, 512, 1048584, 16384, 1026, 0, 0, 524288, 0, 2048, 16777248, 0]
+    lambda { @mol.ob_fingerprint("WACKY") }.should raise_error
+  end
+
+  it 'can calculate the tanimoto similarity' do
+    # oo way to call:
+    @mol.tanimoto(@mol).should == 1.0
+    mol2 = Rubabel::Molecule.from_string("CCC(O)OCCC")
+    # class way to call this
+    t = Rubabel::Molecule.tanimoto(@mol, mol2)
+    # actual: 0.11363636363636363
+    t.should be < 0.2
+    t.should be > 0.0
+  end
+
   describe '3D' do
     before(:each) do
       # cholesterol
