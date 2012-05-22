@@ -125,6 +125,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
   end
 
   it 'Converts SMILES file to SD file' do
+    # http://ctr.wikia.com/wiki/Convert_SMILES_file_to_SD_file
     wiki_code do
       require 'rubabel'
       File.open("benzodiazepine.smi.sdf", 'w') do |out|
@@ -143,6 +144,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
   end
 
   it 'Reports the similarity between two structures' do
+    # http://ctr.wikia.com/wiki/Report_the_similarity_between_two_structures
     output = wiki_code_capture_stdout do
       require 'rubabel'
       (mol1, mol2) = %w{CC(C)C=CCCCCC(=O)NCc1ccc(c(c1)OC)O COC1=C(C=CC(=C1)C=O)O}.map do |smile| 
@@ -155,11 +157,59 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
   end
 
   it 'Finds the 10 nearest neighbors in a data set' do
+    # http://ctr.wikia.com/wiki/Find_the_10_nearest_neighbors_in_a_data_set
     output = wiki_code_capture_stdout do
       require 'rubabel'
-      mol_iter = Rubabel.foreach("benzodiazepine.sdf.gz")
-      mol_iter.next
+      fp1 = nil
+      comparisons = Rubabel.foreach("benzodiazepine.sdf.gz").map do |mol|
+        if fp1
+          [OpenBabel::OBFingerprint.tanimoto(fp1, mol.ob_fingerprint), mol.title]
+        else
+          (fp1 = mol.ob_fingerprint) && nil
+        end
+      end.compact
+      puts comparisons.sort.reverse[0,10].map {|v| "#{v[0].round(3)} #{v[1]}" }
     end
+    output.should == "0.979 3016\n0.979 2997\n0.909 3369\n0.874 2809\n0.769 3299\n0.74 2802\n0.379 3261\n0.377 2118\n0.368 1963\n"
+    # notes: still need a first class fingerprint object so this cleaner
+    
+    # output when run on entire benzodiazepine.sdf.gz:
+    # 1.0 623918
+    # 1.0 450820
+    # 0.993 20351792
+    # 0.986 9862446
+    # 0.979 398658
+    # 0.979 398657
+    # 0.979 6452650
+    # 0.979 450830
+    # 0.979 44353759
+    # 0.979 3016
+
+    # this iterator method gives a segfault!! (not sure why)
+    #mol_iter = Rubabel.foreach("benzodiazepine.sdf.gz")
+    #fp1 = mol_iter.next.ob_fingerprint
+    #loop do
+    #  mol=mol_iter.next rescue break
+    #  comparisons << [OpenBabel::OBFingerprint.tanimoto(fp1, mol.ob_fingerprint).round(2), mol.title]
+    #end
+    #puts comparisons.sort.reverse.map {|pair| pair.join(" ") }
+  end
+
+  xit 'Depicts a compound as an image' do
+    # http://ctr.wikia.com/wiki/Depict_a_compound_as_an_image
+    wiki_code do
+      # still need to work on this!
+      #require 'rubabel'
+      #Rubabel::Molecule.from_string("CN1C=NC2=C1C(=O)N(C(=O)N2C)C").write_file("caffeine.svg")
+    end
+  end
+
+  it 'Highlight a substructure in the depiction' do
+    smarts = "c1ccc2c(c1)C(=NCCN2)c3ccccc3"
+    mol = Rubabel.foreach("benzodiazepine.sdf.gz").find {|mol| mol.title == "3016" }
+    p OpenBabel::OBConversion.constants
+    p mol.obconv.get_options(OpenBabel::OBConversion.(:ALL))
+    #mol.write("hello.svg")
   end
 
 

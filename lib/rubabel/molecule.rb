@@ -27,7 +27,7 @@ module Rubabel
     class << self
 
       def tanimoto(mol1, mol2, type=DEFAULT_FINGERPRINT)
-        OpenBabel::OBFingerprint.tanimoto(mol1.ob_fingerprint, mol2.ob_fingerprint, type)
+        OpenBabel::OBFingerprint.tanimoto(mol1.ob_fingerprint(type), mol2.ob_fingerprint(type))
       end
 
       def from_file(file, type=nil)
@@ -110,22 +110,51 @@ module Rubabel
     def hydrogens_added?
       @ob.has_hydrogens_added
     end
+    alias_method :h_added?, :hydrogens_added?
 
-    def add_h!
-      @ob.add_hydrogens
+    # returns self.  Corrects for ph if ph is not nil.  NOTE: the reversal of
+    # arguments from the OpenBabel api.
+    def add_h!(ph=nil, polaronly=false)
+      if ph.nil?
+        @ob.add_hydrogens(polaronly)
+      else
+        @ob.add_hydrogens(polaronly, true, ph)
+      end
+      self
     end
-    #alias_method :add_h!, :add_hydrogens!
 
-    # creates a new molecule (currently writes to smiles and uses babel
-    # commandline to get hydrogens at a given pH; this is because no pH model
-    # in ruby bindings currently).
-    def add_h_at_ph(ph=7.4)
-      # write the file with the molecule
-      self.write_file("tmp.smi")
-      system "#{Rubabel::CMD[:babel]} -i smi tmp.smi -p #{ph} -o can tmp.can"
-      Molecule.from_file("tmp.can")
+    # returns self.  If ph is nil, then #neutral! is called
+    def correct_for_ph!(ph=7.4)
+      ph.nil? ? neutral! : @ob.correct_for_ph(ph)
+      self
     end
-    #alias_method :add_h!, :add_hydrogens!
+
+    # simple method to coerce the molecule into a neutral charge state.
+    # It does this by removing any charge from each atom and then removing the
+    # hydrogens (which will then can be added back by the user and will be
+    # added back with proper valence).  If the molecule had hydrogens added it
+    # will return the molecule with hydrogens added
+    # returns self.
+    def neutral!
+      had_hydrogens = h_added?
+      atoms.each {|atom| atom.charge = 0 if (atom.charge != 0) }
+      remove_h!
+      add_h! if had_hydrogens 
+      self
+    end
+
+    # adds hydrogens 
+    #def add_h_at_ph!(ph=7.4)
+    #  # creates a new molecule (currently writes to smiles and uses babel
+    #  # commandline to get hydrogens at a given pH; this is because no pH model
+    #  # in ruby bindings currently).
+#
+#      ## write the file with the molecule
+#      #self.write_file("tmp.smi")
+#      #system "#{Rubabel::CMD[:babel]} -i smi tmp.smi -p #{ph} -o can tmp.can"
+#      #Molecule.from_file("tmp.can")
+#    end
+#    #alias_method :add_h!, :add_hydrogens!
 
     def remove_h!
       @ob.delete_hydrogens
@@ -304,9 +333,10 @@ module Rubabel
       @obconv.write_string(@ob)
     end
 
-    # writes to the file based on the extension
-    def write_file(filename)
-      type = Rubabel.filetype(filename)
+    # writes to the file based on the extension given.  If type is given
+    # explicitly, then it is used.
+    def write_file(filename, type=nil)
+      type ||= Rubabel.filetype(filename)
       File.write(filename, write_string(type))
     end
 

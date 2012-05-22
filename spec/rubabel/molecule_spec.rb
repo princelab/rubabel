@@ -45,6 +45,50 @@ describe Rubabel::Molecule do
   end
 
   describe 'getting other descriptors' do
+    # can't figure this out yet
+  end
+
+  describe 'pH' do
+
+    subject { Rubabel::Molecule.from_string("NCC(=O)OCC(=O)O") }
+
+    it '#correct_for_ph! neutral' do
+      subject.correct_for_ph!.to_s.should == '[O-]C(=O)COC(=O)C[NH3+]'
+    end
+
+    it '#correct_for_ph!(1.4) [low]' do
+      subject.correct_for_ph!(1.4).to_s.should == 'OC(=O)COC(=O)C[NH3+]'
+    end
+
+    it '#correct_for_ph!(11.0) [high]' do
+      subject.correct_for_ph!(11.0).to_s.should == '[O-]C(=O)COC(=O)CN'
+    end
+
+    it '#correct_for_ph!(nil) [gives neutral molecule]' do
+      subject.correct_for_ph!.to_s.should == '[O-]C(=O)COC(=O)C[NH3+]'
+      subject.correct_for_ph!(nil).to_s.should == "NCC(=O)OCC(=O)O"
+    end
+
+    it '#neutral! [can be set neutral again]' do
+      subject.correct_for_ph!
+      subject.to_s.should == '[O-]C(=O)COC(=O)C[NH3+]'
+      subject.h_added?.should == false
+      subject.neutral!.to_s.should == "NCC(=O)OCC(=O)O"
+      subject.h_added?.should == false
+    end
+
+    it '#neutral! [preserves hydrogens added state]' do
+      subject.correct_for_ph!
+      subject.add_h!
+      subject.to_s.should == '[O-]C(=O)COC(=O)C[NH3+]'
+      subject.h_added?.should == true
+      subject.neutral!.to_s.should == "NCC(=O)OCC(=O)O"
+      subject.h_added?.should == true
+    end
+
+    it '#add_h!(11.0) [can correct for ph if given a ph]' do
+      subject.add_h!(11.0).to_s.should == '[O-]C(=O)COC(=O)CN'
+    end
 
   end
 

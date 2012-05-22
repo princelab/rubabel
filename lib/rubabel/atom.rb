@@ -92,6 +92,11 @@ module Rubabel
     end
     alias_method :charge, :formal_charge
 
+    def formal_charge=(val)
+      @ob.set_formal_charge(val)
+    end
+    alias_method :charge=, :formal_charge=
+
     def heavy_valence
       @ob.get_heavy_valence
     end
