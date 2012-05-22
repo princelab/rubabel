@@ -2,6 +2,7 @@ require 'openbabel'
 require 'rubabel'
 require 'rubabel/atom'
 require 'rubabel/bond'
+require 'rubabel/molecule/fragmentable'
 
 class OpenBabel::OBMol
   def upcast
