@@ -18,6 +18,14 @@ describe Rubabel::Molecule do
     end
   end
 
+  it '#dup creates an entirely new molecule based on the first' do
+    another = @mol.dup
+    # this is a deep copy all the way.  Even the atoms are duplicated so that
+    # they can be modified in one and do not affect the other at all.
+    @mol.atoms.first.charge = 1
+    @mol.charge.should_not == another.charge
+  end
+
   it '#each iterates through each atom in id order' do
     cnt = 0
     @mol.each do |atom|
@@ -42,6 +50,21 @@ describe Rubabel::Molecule do
     ar.should be_an(Array)
     # in the future should be Rubabel::Ring
     ar.first.should be_a(OpenBabel::OBRing)
+  end
+
+  describe 'masses' do
+    subject { Rubabel::Molecule.from_string("C(=O)COC(=O)C[NH3+]") }
+    it '#mol_wt (or #avg_mass)' do
+      subject.mol_wt.should be_within(0.000001).of(118.11121999999999)
+    end
+
+    it '#exact_mass' do
+      subject.exact_mass.should be_within(0.00000001).of(118.05041812003999)
+    end
+
+    it '#mass is the exact mass adjusted for electron gain/loss' do
+      subject.mass.should be_within(0.00000001).of(118.04986952003999)
+    end
   end
 
   describe 'getting other descriptors' do
@@ -154,12 +177,25 @@ describe Rubabel::Molecule do
       @mol.each_bond.map.to_a.size.should == 9
     end
 
-    it 'can be split into multiple molecules' do
+    it 'can be split into multiple molecules [unaffecting self]' do
+      num_bonds_before = @mol.num_bonds
+      num_atoms_before = @mol.num_atoms
+
       reply = @mol.split(@mol.bonds.first, @mol.bonds.last)
+
       reply.should be_a(Array)
       reply.size.should == 3
+      @mol.num_bonds.should == num_bonds_before
+      @mol.num_atoms.should == num_atoms_before
       csmiles = reply.map(&:csmiles)
       csmiles.sort.should == %w(N CC=O O).sort
+    end
+
+    it '#split can yield fragments before separating them' do
+      csmiles = %w(N CC=O O)
+      frags = @mol.split(@mol.bonds.first, @mol.bonds.last) do |frags|
+        frags.map(&:csmiles).should == csmiles
+      end
     end
   end
 

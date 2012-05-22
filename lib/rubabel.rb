@@ -5,6 +5,9 @@ require 'openbabel'
 end
 
 module Rubabel
+  # the mass of an electron
+  MASS_E = 0.0005486
+  # www.mikeblaber.org/oldwine/chm1045/notes/Atoms/.../Atoms03.htm
 
   # available force-fields (would like to generate this with introspection)
   AVAILABLE_FORCEFIELDS = [:mmff94, :ghemical, :mm2, :uff] 

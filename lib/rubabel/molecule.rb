@@ -56,6 +56,11 @@ module Rubabel
 
     def exact_mass() @ob.get_exact_mass end
 
+    # returns the exact_mass corrected for charge gain/loss
+    def mass
+      @ob.get_exact_mass - (@ob.get_total_charge * Rubabel::MASS_E)
+    end
+
     # returns a string representation of the molecular formula.  Not sensitive
     # to add_h!
     def formula() @ob.get_formula end
@@ -208,6 +213,14 @@ module Rubabel
       self
     end
 
+    # creates a deep copy of the molecule (even the atoms are duplicated)
+    def initialize_copy(source)
+      super
+      @ob = OpenBabel::OBMol.new(source.ob)
+      @obconv = OpenBabel::OBConversion.new(source.obconv)
+      self
+    end
+
     # returns the array of bonds.  Consider using #each_bond
     def bonds
       each_bond.map.to_a
@@ -246,13 +259,49 @@ module Rubabel
       fp
     end
 
-    def split(*bonds)
+    # obj is an atom or bond
+    def delete(obj)
+      case obj
+      when Rubabel::Bond
+        delete_bond(obj)
+      when Rubabel::Atom
+        delete_atom(obj)
+      else 
+        raise(ArgumentError, "don't know how to delete objects of type: #{obj.class}")
+      end
+    end
+
+    def delete_bond(bond)
+      @ob.delete_bond(bond.ob)
+    end
+
+    def delete_atom(atom)
+      @ob.delete_atom(atom.ob)
+    end
+
+    def split(*bonds, &block)
+      # delete each bond given
       bonds.each do |bond|
         unless @ob.delete_bond(bond.ob, false)
           raise "#{bond.inspect} not deleted!" 
         end
       end
+
+      if block
+        iter = OpenBabel::OBMolAtomDFSIter.new(@ob)
+        new_obmol = OpenBabel::OBMol.new
+        mols = []
+        while @ob.get_next_fragment(iter, new_obmol)
+          mols << new_obmol.upcast
+          new_obmol = OpenBabel::OBMol.new
+        end
+        block.call(mols)
+      end
+
+
+      # separate creates a new mol based on each disjointed piece
       frags = @ob.separate.map(&:upcast)
+      # reanneal the molecule
       bonds.each {|bond| @ob.add_bond(bond.ob) }
       frags
     end
@@ -311,12 +360,12 @@ module Rubabel
       self
     end
 
-    def global_optimize!(forcefield=DEFAULT_FORCEFIELD, steps=1000)
-      if dim != 3
-        # don't bother optimizing yet (steps=nil)
-        make_3d!(DEFAULT_FORCEFIELD, nil)
-      end
-    end
+    #def global_optimize!(forcefield=DEFAULT_FORCEFIELD, steps=1000)
+    #  if dim != 3
+    #    # don't bother optimizing yet (steps=nil)
+    #    make_3d!(DEFAULT_FORCEFIELD, nil)
+    #  end
+    #end
 
     # does a bit of basic local optimization unless steps is set to nil
     # returns self

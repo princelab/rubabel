@@ -34,6 +34,15 @@ module Rubabel
 
     alias_method :each, :each_atom
 
+    def bond_order
+      @ob.get_bond_order
+    end
+
+    # 1 = single, 2 = double, 5 = aromatic
+    def bond_order=(val=1)
+      @ob.set_bond_order(val)
+    end
+
     # returns an array of Rubabel::Atoms
     def atoms
       [@ob.get_begin_atom.upcast, @ob.get_end_atom.upcast]
