@@ -4,8 +4,14 @@ require 'rubabel'
 
 describe Rubabel::Molecule::Fragmentable do
   describe 'the :co rule' do
-    subject { Rubabel::Molecule.from_string("NC(O)CC(=O)O") }
-    it 'generates 4 fragments' do
+    subject { Rubabel::Molecule.from_string("NCC(O)CC(=O)O") }
+
+    it ':h2oloss' do
+      puts "HIYA"
+      subject.fragment( rules: [:h2oloss] )
+    end
+
+    xit 'generates 4 fragments' do
       pieces = subject.fragment(rules: [:co])
       pieces.size.should == 4
       p pieces

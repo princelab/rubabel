@@ -16,7 +16,8 @@ interface attempts to be a ruby-ish analogue of pybel.}
   gem.authors = ["John T. Prince"]
   [
     ["openbabel", "~> 2.3.1.2"],
-    ["commander", "~> 4.1.2"]
+    ["commander", "~> 4.1.2"],
+    ["andand", "~> 1.3.3"]
   ].each do |args|
     gem.add_dependency(*args)
   end

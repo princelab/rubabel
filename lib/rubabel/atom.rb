@@ -1,4 +1,5 @@
 require 'matrix'
+require 'andand'
 
 require 'rubabel/bond'
 
@@ -11,6 +12,21 @@ end
 module Rubabel
   class Atom
     include Enumerable
+
+    class << self
+      # takes an element symbol and creates that atom
+      def [](el_sym=:h, id=0)
+        ob_atom = OpenBabel::OBAtom.new
+        ob_atom.set_id(id)
+        ob_atom.set_atomic_num(Rubabel::EL_TO_NUM[el_sym])
+        self.new(ob_atom)
+      end
+    end
+
+    # returns the molecule that is parent of this atom
+    def mol
+      @ob.get_parent.andand.upcast
+    end
 
     # the OpenBabel::OBAtom object
     attr_accessor :ob
@@ -42,6 +58,16 @@ module Rubabel
       NUM_TO_ELEMENT[atomic_num]
     end
 
+    # creates a bond and adds it to both atoms
+    def add_atom!(other)
+      obbond = OpenBabel::OBBond.new
+      obbond.set_begin(self.ob)
+      obbond.set_end(other.ob)
+      @ob.add_bond(obbond)
+      other.ob.add_bond(obbond)
+      self
+    end
+
     def each_bond(&block)
       block or return enum_for(__method__)
       iter = @ob.begin_bonds
@@ -53,6 +79,11 @@ module Rubabel
     end
 
     alias_method :each, :each_bond
+
+    # retrieves the bond 
+    def get_bond(atom)
+      @ob.get_bond(atom.ob).andand.upcast
+    end
 
     # returns the bonds.  Consider using each_bond.
     def bonds

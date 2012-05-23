@@ -121,6 +121,9 @@ module Rubabel
 
   # atomic number to lowercase symbol abbreviation
   NUM_TO_EL = Hash[ ELEMENTS.each_with_index.map {|el,i| [i+1,el.downcase.to_sym] } ]
+
+  EL_TO_NUM = NUM_TO_EL.invert
+  ELEMENT_TO_NUM = NUM_TO_ELEMENT.invert
 end
 
 =begin

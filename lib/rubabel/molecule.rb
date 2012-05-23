@@ -279,31 +279,24 @@ module Rubabel
       @ob.delete_atom(atom.ob)
     end
 
-    def split(*bonds, &block)
-      # delete each bond given
+    # yields self after deleting the specified bonds.  When the block is
+    # closed the bonds are restored.  Returns whatever is returned from the
+    # block.
+    def delete_and_restore_bonds(*bonds, &block)
       bonds.each do |bond|
         unless @ob.delete_bond(bond.ob, false)
           raise "#{bond.inspect} not deleted!" 
         end
       end
-
-      if block
-        iter = OpenBabel::OBMolAtomDFSIter.new(@ob)
-        new_obmol = OpenBabel::OBMol.new
-        mols = []
-        while @ob.get_next_fragment(iter, new_obmol)
-          mols << new_obmol.upcast
-          new_obmol = OpenBabel::OBMol.new
-        end
-        block.call(mols)
-      end
-
-
-      # separate creates a new mol based on each disjointed piece
-      frags = @ob.separate.map(&:upcast)
-      # reanneal the molecule
+      reply = block.call(self)
       bonds.each {|bond| @ob.add_bond(bond.ob) }
-      frags
+      reply
+    end
+
+    def split(*bonds)
+      delete_and_restore_bonds(*bonds) do |mol|
+        mol.ob.separate.map(&:upcast)
+      end
     end
 
     alias_method :separate, :split

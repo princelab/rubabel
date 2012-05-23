@@ -13,6 +13,15 @@ module Rubabel
   class Bond
     include Enumerable
 
+    class << self
+      def [](atom1, atom2)
+        obbond = OpenBabel::OBBond.new
+        obbond.set_begin(atom1.ob)
+        obbond.set_end(atom2.ob)
+        self.new(obbond)
+      end
+    end
+
     attr_accessor :ob
 
     def initialize(obbond)

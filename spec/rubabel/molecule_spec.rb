@@ -191,12 +191,6 @@ describe Rubabel::Molecule do
       csmiles.sort.should == %w(N CC=O O).sort
     end
 
-    it '#split can yield fragments before separating them' do
-      csmiles = %w(N CC=O O)
-      frags = @mol.split(@mol.bonds.first, @mol.bonds.last) do |frags|
-        frags.map(&:csmiles).should == csmiles
-      end
-    end
   end
 
   describe 'matching patterns (SMARTS)' do
