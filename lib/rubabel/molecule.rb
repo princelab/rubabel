@@ -16,8 +16,11 @@ end
 module Rubabel
     # yet to implement: 
   class Molecule
-    DEFAULT_FINGERPRINT = "FP2"
     include Enumerable
+
+    DEFAULT_FINGERPRINT = "FP2"
+    DEFAULT_OUT_TYPE = :can
+    DEFAULT_IN_TYPE = :smi
 
     # the OpenBabel::OBmol object
     attr_accessor :ob
@@ -35,12 +38,11 @@ module Rubabel
         Rubabel.molecule_from_file(file, type)
       end
 
-      def from_string(string, type=:smi)
+      def from_string(string, type=DEFAULT_IN_TYPE)
         Rubabel.molecule_from_string(string, type)
       end
     end
 
-    DEFAULT_OUT_TYPE = :can
 
     # attributes
     def title() @ob.get_title end
@@ -162,8 +164,10 @@ module Rubabel
 #    end
 #    #alias_method :add_h!, :add_hydrogens!
 
+    # returns self
     def remove_h!
       @ob.delete_hydrogens
+      self
     end
 
     # calls separate on the OBMol object

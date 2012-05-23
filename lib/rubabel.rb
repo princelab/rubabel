@@ -1,4 +1,5 @@
 require 'openbabel'
+require 'rubabel/molecule'
 
 %w(atom molecule fingerprint smarts molecule_data).each do |klass|
   require "rubabel/#{klass}"
@@ -22,6 +23,10 @@ module Rubabel
   }
 
   class << self
+
+    def [](string, type=Rubabel::Molecule::DEFAULT_IN_TYPE)
+      Rubabel::Molecule.from_string(string, type)
+    end
 
     def force_field(type=DEFAULT_FORCEFIELD)
       OpenBabel::OBForceField.find_force_field(type.to_s)

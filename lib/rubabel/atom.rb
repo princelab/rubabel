@@ -168,6 +168,44 @@ module Rubabel
       @ob.get_vector
     end
 
+    def hydrogen?() @ob.is_hydrogen end
+    def carbon?() @ob.is_carbon end
+    def nitrogen?() @ob.is_nitrogen end
+    def oxygen?() @ob.is_oxygen end
+    def sulfur?() @ob.is_sulfur end
+    def phosphorus?() @ob.is_phosphorus end
+    def aromatic?() @ob.is_aromatic end
+    def in_ring?() @ob.is_in_ring end
+    def in_ring_size?() @ob.is_in_ring_size end
+    def heteroatom?() @ob.is_heteroatom end
+    def not_c_or_h?() @ob.is_not_cor_h end
+    def connected?() @ob.is_connected end
+    def one_three?() @ob.is_one_three end
+    def one_four?() @ob.is_one_four end
+    def carboxyl_oxygen?() @ob.is_carboxyl_oxygen end
+    def phosphate_oxygen?() @ob.is_phosphate_oxygen end
+    def sulfate_oxygen?() @ob.is_sulfate_oxygen end
+    def nitro_oxygen?() @ob.is_nitro_oxygen end
+    def amide_nitrogen?() @ob.is_amide_nitrogen end
+    def polar_hydrogen?() @ob.is_polar_hydrogen end
+    def non_polar_hydrogen?() @ob.is_non_polar_hydrogen end
+    def aromatic_noxide?() @ob.is_aromatic_noxide end
+    def chiral?() @ob.is_chiral end
+    def axial?() @ob.is_axial end
+    def clockwise?() @ob.is_clockwise end
+    def anti_clockwise?() @ob.is_anti_clockwise end
+    def positive_stereo?() @ob.is_positive_stereo end
+    def negative_stereo?() @ob.is_negative_stereo end
+    def chirality_specified?() @ob.has_chirality_specified end
+    def chiral_volume?() @ob.has_chiral_volume end
+    def hbond_acceptor?() @ob.is_hbond_acceptor end
+    def hbond_donor?() @ob.is_hbond_donor end
+    def hbond_donor_h?() @ob.is_hbond_donor_h end
+
+    def carboxyl_carbon?
+      atoms.any?(&:carboxyl_oxygen?)
+    end
+
     def coords
       Vector[@ob.x, @ob.y, @ob.z]
     end

@@ -13,43 +13,72 @@ module Rubabel
         uniq: false, 
       }
 
+      # molecules and fragments should all have hydrogens added (add_h!)
+      # before calling this method
+      # 
+      # For instance, water loss with double bond formation is not allowable
+      # for NCC(O)CC => CCC=C[NH2+], presumably because of the lone pair and
+      # double bond resonance.
+      #     
+      def allowable_fragmentation?(frags)
+        self.num_atoms == frags.map(&:num_atoms).reduce(:+)
+      end
+
+      # will turn bond into a double bond, yield the changed molecule, then
+      # return the bond to the original state when the block is closed
+      # returns whatever the block returned
+      def feint_double_bond(bond, &block)
+        orig = bond.bond_order
+        bond.bond_order = 2
+        reply = block.call(self)
+        bond.bond_order = orig
+        reply
+      end
+
       # to ensure proper fragmentation, will add_h!(ph) first at the given ph
       # an empty array is returned if there are no fragments generated.
       def fragment(opts={})
         opts = DEFAULT_OPTIONS.merge(opts)
 
-        mol = self.dup
-        mol.correct_for_ph!(opts[:ph])
-        mol.remove_h!
+        had_hydrogens = self.h_added?
 
-        p 'wrd'
+        self.correct_for_ph!(opts[:ph])
+        self.remove_h!
+
         rules = opts[:rules]
         fragments = []
-        mol.each_match("C(O)").each do |_atoms|
-        p 'hel'
-          carbon = _atoms[0]
-          oxygen = _atoms[1]
-          # water loss
-          if rules.include?(:h2oloss)
-            # should there be possible water loss off of carboxylic acid???
-            p mol
-            p(  carbon.each_atom.map {|at| at.ob.is_carboxyl_oxygen }.count(true).size >= 2 )
-            p carbon.each_atom.map {|at| at.ob.is_carboxyl_oxygen }.count(true)
+        self.each_match("CO").each do |_atoms|
+          (carbon, oxygen) = _atoms
+          carbon_nbrs = carbon.atoms.reject {|atom| atom == oxygen }
 
-            unless carbon.each_atom.map {|at| at.ob.is_carboxyl_oxygen }.count(true).size >= 2
-              puts "HAFASDF"
-              p carbon.get_bond(oxygen)
-              frags = mol.split(carbon.get_bond(oxygen))
-              p frags
-              abort 'herewsdfsdfsdf'
-              fragments.push *frags
+          case oxygen.bonds.size
+          when 1  # an alcohol
+            # water loss
+            double_bondable = carbon_nbrs.select {|atm| atm.type == 'C3' }
+            if rules.include?(:h2oloss) && (double_bondable.size > 0) && !carbon.carboxyl_carbon?
+              frag_sets = double_bondable.map do |dbl_bondable_atom|
+                frags = feint_double_bond(dbl_bondable_atom.get_bond(carbon)) do |_mol|
+                  # TODO: check accuracy before completely splitting for efficiency
+                  frags = _mol.split(carbon.get_bond(oxygen))
+                  frags.map(&:add_h!)
+                end
+              end
+
+              self.add_h!
+              frag_sets.select! do |_frags| 
+                self.allowable_fragmentation?(_frags)
+              end
+              fragments.push *frag_sets.flatten(1)
             end
+            # oxygen bonded to something else (per-oxide??)
+            # also could be ether situation...
+          when 2  
           end
         end
-        p fragments
-        fragments
-
-        fragments.each(&:add_h!) if self.h_added?
+        unless had_hydrogens
+          fragments.each(&:remove_h!)
+          self.remove_h!
+        end
         fragments
       end
 
