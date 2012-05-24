@@ -3,6 +3,13 @@ require 'spec_helper'
 require 'rubabel/molecule'
 
 describe Rubabel::Molecule do
+  describe 'creation' do
+    it 'can be made with Rubabel[]' do
+      mol = Rubabel["CC(O)O"]
+      mol.csmiles.should == "CC(O)O"
+    end
+  end
+
   before(:each) do
     @mol = Rubabel::Molecule.from_file( TESTFILES + '/cholesterol.sdf' )
   end

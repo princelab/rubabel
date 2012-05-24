@@ -50,25 +50,65 @@ module Rubabel
         self.each_match("CO").each do |_atoms|
           (carbon, oxygen) = _atoms
           carbon_nbrs = carbon.atoms.reject {|atom| atom == oxygen }
+          c3_nbrs = carbon_nbrs.select {|atm| atm.type == 'C3' }
+          num_oxygen_bonds = oxygen.bonds.size
+          # pulling this out here causes it to work incorrectly internally
+          # (not sure why)
+          #co_bond = carbon.get_bond(oxygen)
 
-          case oxygen.bonds.size
           when 1  # an alcohol
             # water loss
-            double_bondable = carbon_nbrs.select {|atm| atm.type == 'C3' }
-            if rules.include?(:h2oloss) && (double_bondable.size > 0) && !carbon.carboxyl_carbon?
-              frag_sets = double_bondable.map do |dbl_bondable_atom|
-                frags = feint_double_bond(dbl_bondable_atom.get_bond(carbon)) do |_mol|
-                  # TODO: check accuracy before completely splitting for efficiency
-                  frags = _mol.split(carbon.get_bond(oxygen))
-                  frags.map(&:add_h!)
+            if (c3_nbrs.size > 0) && !carbon.carboxyl_carbon?
+              if rules.include?(:h2oloss) && (num_oxygen_bonds == 1)
+                frag_sets = c3_nbrs.map do |dbl_bondable_atom|
+                  frags = feint_double_bond(dbl_bondable_atom.get_bond(carbon)) do |_mol|
+                    # TODO: check accuracy before completely splitting for efficiency
+                    frags = _mol.split(carbon.get_bond(oxygen))
+                    frags.map(&:add_h!)
+                  end
                 end
+
+                self.add_h!
+                frag_sets.select! do |_frags| 
+                  self.allowable_fragmentation?(_frags)
+                end
+                fragments.push *frag_sets
+              end
+              if rules.include?(:co) && (num_oxygen_bonds == 1)
+                # alcohol becomes a ketone and one R group is released
+                frag_sets = c3_nbrs.map do |neighbor_atom|
+                  frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
+                    frags = _mol.split(carbon.get_bond(neighbor_atom))
+                    frags.map(&:add_h!)
+                  end
+                end
+
+                self.add_h!
+                frag_sets.select! do |_frags| 
+                  self.allowable_fragmentation?(_frags)
+                end
+                fragments.push *frag_sets
               end
 
-              self.add_h!
-              frag_sets.select! do |_frags| 
-                self.allowable_fragmentation?(_frags)
+              if rules.include?(:co) && (num_oxygen_bonds == 2)
+                if oxygen
+
+
+                # alcohol becomes a ketone and one R group is released
+                frag_sets = c3_nbrs.map do |neighbor_atom|
+                  frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
+                    frags = _mol.split(carbon.get_bond(neighbor_atom))
+                    frags.map(&:add_h!)
+                  end
+                end
+
+                self.add_h!
+                frag_sets.select! do |_frags| 
+                  self.allowable_fragmentation?(_frags)
+                end
+                fragments.push *frag_sets
               end
-              fragments.push *frag_sets.flatten(1)
+
             end
             # oxygen bonded to something else (per-oxide??)
             # also could be ether situation...
@@ -76,7 +116,7 @@ module Rubabel
           end
         end
         unless had_hydrogens
-          fragments.each(&:remove_h!)
+          fragments.each {|set| set.each(&:remove_h!) }
           self.remove_h!
         end
         fragments

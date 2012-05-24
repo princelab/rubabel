@@ -206,6 +206,10 @@ module Rubabel
       atoms.any?(&:carboxyl_oxygen?)
     end
 
+#    # does this carbon hold a primary alcohol
+#    def primary_alcohol_carbon?
+#    end
+
     def coords
       Vector[@ob.x, @ob.y, @ob.z]
     end
