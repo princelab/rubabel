@@ -51,16 +51,18 @@ module Rubabel
           (carbon, oxygen) = _atoms
           carbon_nbrs = carbon.atoms.reject {|atom| atom == oxygen }
           c3_nbrs = carbon_nbrs.select {|atm| atm.type == 'C3' }
+          c2_nbrs = carbon_nbrs.select {|atm| atm.type == 'C2' }
           num_oxygen_bonds = oxygen.bonds.size
           # pulling this out here causes it to work incorrectly internally
           # (not sure why)
           #co_bond = carbon.get_bond(oxygen)
 
+          case num_oxygen_bonds
           when 1  # an alcohol
             # water loss
-            if (c3_nbrs.size > 0) && !carbon.carboxyl_carbon?
-              if rules.include?(:h2oloss) && (num_oxygen_bonds == 1)
-                frag_sets = c3_nbrs.map do |dbl_bondable_atom|
+            if (c3_nbrs.size > 0 || c2_nbrs.size > 0) && !carbon.carboxyl_carbon?
+              if rules.include?(:h2oloss)
+                frag_sets = [c2_nbrs + c3_nbrs].map do |dbl_bondable_atom|
                   frags = feint_double_bond(dbl_bondable_atom.get_bond(carbon)) do |_mol|
                     # TODO: check accuracy before completely splitting for efficiency
                     frags = _mol.split(carbon.get_bond(oxygen))
@@ -74,7 +76,7 @@ module Rubabel
                 end
                 fragments.push *frag_sets
               end
-              if rules.include?(:co) && (num_oxygen_bonds == 1)
+              if rules.include?(:co)
                 # alcohol becomes a ketone and one R group is released
                 frag_sets = c3_nbrs.map do |neighbor_atom|
                   frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
