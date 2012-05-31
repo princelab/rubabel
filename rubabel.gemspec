@@ -5,13 +5,14 @@
 
 Gem::Specification.new do |s|
   s.name = "rubabel"
-  s.version = "0.1.0"
+  s.version = "0.1.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["John T. Prince"]
-  s.date = "2012-05-10"
+  s.date = "2012-05-31"
   s.description = "Ruby interface to the openbabel ruby bindings (or the openbabel gem).  The\ninterface attempts to be a ruby-ish analogue of pybel."
   s.email = "jtprince@gmail.com"
+  s.executables = ["rubabel"]
   s.extra_rdoc_files = [
     "LICENSE",
     "README.rdoc"
@@ -23,12 +24,13 @@ Gem::Specification.new do |s|
     "README.rdoc",
     "Rakefile",
     "VERSION",
+    "bin/rubabel",
     "lib/rubabel.rb",
     "lib/rubabel/atom.rb",
     "lib/rubabel/bond.rb",
     "lib/rubabel/fingerprint.rb",
-    "lib/rubabel/fragmentation.rb",
     "lib/rubabel/molecule.rb",
+    "lib/rubabel/molecule/fragmentable.rb",
     "lib/rubabel/molecule_data.rb",
     "lib/rubabel/pm.rb",
     "lib/rubabel/smarts.rb",
@@ -39,14 +41,25 @@ Gem::Specification.new do |s|
     "reference/bond_methods.txt",
     "reference/get_methods.rb",
     "reference/mol_methods.txt",
+    "rubabel.gemspec",
+    "spec/chemistry_toolkit_rosetta/README.txt",
+    "spec/chemistry_toolkit_rosetta/benzodiazepine.sdf.gz",
+    "spec/chemistry_toolkit_rosetta/benzodiazepine.smi.gz",
+    "spec/chemistry_toolkit_rosetta/chemistry_toolkit_rosetta_spec.rb",
+    "spec/chemistry_toolkit_rosetta/key/benzodiazepine_heavy_atom_counts.output.10.txt",
+    "spec/chemistry_toolkit_rosetta/key/benzodiazepine_ring_counts.output.10.txt",
+    "spec/chemistry_toolkit_rosetta/key/rule5.10.sdf",
     "spec/rubabel/atom_spec.rb",
     "spec/rubabel/bond_spec.rb",
+    "spec/rubabel/molecule/fragmentable_spec.rb",
+    "spec/rubabel/molecule_data_spec.rb",
     "spec/rubabel/molecule_spec.rb",
     "spec/rubabel_spec.rb",
     "spec/spec_helper.rb",
     "spec/testfiles/7-oxocholesterol-d7.mol",
     "spec/testfiles/7-oxocholesterol-d7.sdf",
     "spec/testfiles/Samples.sdf",
+    "spec/testfiles/Samples.sdf.gz",
     "spec/testfiles/cholesterol.mol",
     "spec/testfiles/cholesterol.sdf",
     "spec/testfiles/two.sdf"
@@ -61,15 +74,24 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
+      s.add_runtime_dependency(%q<openbabel>, ["~> 2.3.1.2"])
+      s.add_runtime_dependency(%q<commander>, ["~> 4.1.2"])
+      s.add_runtime_dependency(%q<andand>, ["~> 1.3.3"])
       s.add_development_dependency(%q<rspec>, ["~> 2.8.0"])
       s.add_development_dependency(%q<rdoc>, ["~> 3.12"])
       s.add_development_dependency(%q<jeweler>, ["~> 1.8.3"])
     else
+      s.add_dependency(%q<openbabel>, ["~> 2.3.1.2"])
+      s.add_dependency(%q<commander>, ["~> 4.1.2"])
+      s.add_dependency(%q<andand>, ["~> 1.3.3"])
       s.add_dependency(%q<rspec>, ["~> 2.8.0"])
       s.add_dependency(%q<rdoc>, ["~> 3.12"])
       s.add_dependency(%q<jeweler>, ["~> 1.8.3"])
     end
   else
+    s.add_dependency(%q<openbabel>, ["~> 2.3.1.2"])
+    s.add_dependency(%q<commander>, ["~> 4.1.2"])
+    s.add_dependency(%q<andand>, ["~> 1.3.3"])
     s.add_dependency(%q<rspec>, ["~> 2.8.0"])
     s.add_dependency(%q<rdoc>, ["~> 3.12"])
     s.add_dependency(%q<jeweler>, ["~> 1.8.3"])
