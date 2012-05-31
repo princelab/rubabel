@@ -57,7 +57,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     wiki_code do
       require 'rubabel'
       smiles = %w{CN2C(=O)N(C)C(=O)C1=C2N=CN1C CN1C=NC2=C1C(=O)N(C)C(=O)N2C}
-      cans = smiles.map {|smile| Rubabel::Molecule.from_string(smile) }
+      cans = smiles.map {|smile| Rubabel[smile] }
       fail unless cans.reduce(:==)
     end
   end
@@ -100,7 +100,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
       require 'rubabel'
       File.open("log.txt", 'w') do |out|
         %w(Q C1C).each do |smile|
-          Rubabel::Molecule.from_string(smile) rescue out.puts "bad smiles #{smile}"
+          Rubabel[smile] rescue out.puts "bad smiles #{smile}"
         end
       end
       # note: error catching can only be performed with the from_string
@@ -148,7 +148,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     output = wiki_code_capture_stdout do
       require 'rubabel'
       (mol1, mol2) = %w{CC(C)C=CCCCCC(=O)NCc1ccc(c(c1)OC)O COC1=C(C=CC(=C1)C=O)O}.map do |smile| 
-        Rubabel::Molecule.from_string(smile) 
+        Rubabel[smile]
       end
       puts mol1.tanimoto(mol2)
     end
@@ -200,11 +200,11 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     wiki_code do
       # still need to work on this!
       #require 'rubabel'
-      #Rubabel::Molecule.from_string("CN1C=NC2=C1C(=O)N(C(=O)N2C)C").write_file("caffeine.svg")
+      #Rubabel["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"].write_file("caffeine.svg")
     end
   end
 
-  it 'Highlight a substructure in the depiction' do
+  xit 'Highlight a substructure in the depiction' do
     smarts = "c1ccc2c(c1)C(=NCCN2)c3ccccc3"
     mol = Rubabel.foreach("benzodiazepine.sdf.gz").find {|mol| mol.title == "3016" }
     p OpenBabel::OBConversion.constants

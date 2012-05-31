@@ -62,7 +62,7 @@ module Rubabel
             # water loss
             if (c3_nbrs.size > 0 || c2_nbrs.size > 0) && !carbon.carboxyl_carbon?
               if rules.include?(:h2oloss)
-                frag_sets = [c2_nbrs + c3_nbrs].map do |dbl_bondable_atom|
+                frag_sets = (c2_nbrs + c3_nbrs).map do |dbl_bondable_atom|
                   frags = feint_double_bond(dbl_bondable_atom.get_bond(carbon)) do |_mol|
                     # TODO: check accuracy before completely splitting for efficiency
                     frags = _mol.split(carbon.get_bond(oxygen))
@@ -96,25 +96,27 @@ module Rubabel
                 if oxygen
 
 
-                # alcohol becomes a ketone and one R group is released
-                frag_sets = c3_nbrs.map do |neighbor_atom|
-                  frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
-                    frags = _mol.split(carbon.get_bond(neighbor_atom))
-                    frags.map(&:add_h!)
+                  # alcohol becomes a ketone and one R group is released
+                  frag_sets = c3_nbrs.map do |neighbor_atom|
+                    frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
+                      frags = _mol.split(carbon.get_bond(neighbor_atom))
+                      frags.map(&:add_h!)
+                    end
                   end
+
+                  self.add_h!
+                  frag_sets.select! do |_frags| 
+                    self.allowable_fragmentation?(_frags)
+                  end
+                  fragments.push *frag_sets
                 end
 
-                self.add_h!
-                frag_sets.select! do |_frags| 
-                  self.allowable_fragmentation?(_frags)
-                end
-                fragments.push *frag_sets
               end
-
             end
             # oxygen bonded to something else (per-oxide??)
             # also could be ether situation...
           when 2  
+            raise NotImplementedError
           end
         end
         unless had_hydrogens
