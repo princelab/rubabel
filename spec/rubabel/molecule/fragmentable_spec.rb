@@ -38,7 +38,7 @@ describe Rubabel::Molecule::Fragmentable do
 
     end
 
-    describe ':co2_loss' do
+    describe ':co2_loss', :pending do
       it 'loss of CO2 from carboxy group with charge transfer' do
         mol = Rubabel["NCC(=O)O"]
         frag_sets = mol.fragment( rules: [:co2_loss] )
@@ -71,7 +71,7 @@ describe Rubabel::Molecule::Fragmentable do
       end
     end
 
-    describe ':sp3c_oxygen_double_bond' do
+    describe ':sp3c_oxygen_double_bond', :pending do
 
       describe 'water loss' do
         it 'does h2o loss of alcohol' do
