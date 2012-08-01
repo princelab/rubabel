@@ -104,6 +104,7 @@ module Rubabel
         self.remove_h!
 
         rules = opts[:rules]
+        p rules
         fragments = []
         if rules.any? {|rule| CO_RULES.include?(rule) }
           self.each_match("CO").each do |_atoms|
@@ -148,11 +149,11 @@ module Rubabel
                 if rules.include?(:peroxy_to_carboxy)
                   if distal_o=oxygen.atoms.find {|atom| atom.el == :o }  # has a neighbor oxygen
                     if distal_o.bonds.size == 1  # this is a peroxy
-                      orig_o_oh_bond = distal_o.get_bond(oxygen)
+                      #orig_o_oh_bond = distal_o.get_bond(oxygen)
 
-                      new_oh_bond = Rubabel::Bond[ carbon, distal_o ]
-                      delete_bond(orig_o_oh_bond)
-                      add_bond(new_oh_bond)
+                      #new_oh_bond = Rubabel::Bond[ carbon, distal_o ]
+                      #delete_bond(orig_o_oh_bond)
+                      #add_bond(new_oh_bond)
 
                       frag_sets = carbon_nbrs.select {|atom| atom.type == 'C3' }.map do |_atom|
                         frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
@@ -162,8 +163,8 @@ module Rubabel
                       end
                       fragments.push *allowable_fragment_sets!(frag_sets)
 
-                      delete_bond(new_oh_bond)
-                      add_bond(orig_o_oh_bond)
+                      #delete_bond(new_oh_bond)
+                      #add_bond(orig_o_oh_bond)
                     end
                   end
                 end

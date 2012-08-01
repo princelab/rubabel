@@ -25,7 +25,19 @@ describe Rubabel::Molecule do
     end
   end
 
-  it '#dup creates an entirely new molecule based on the first' do
+  specify '#swap! can swap atoms' do
+    mol = Rubabel["NCC(=O)O"]
+    atoms = mol.atoms
+    p mol.atoms
+    p mol.bonds
+    p mol
+    p mol.swap!(atoms[1], atoms[0], atoms[3], atoms[4])
+    p mol
+    p mol.atoms
+    p mol.bonds
+  end
+
+  specify '#dup creates an entirely new molecule based on the first' do
     another = @mol.dup
     # this is a deep copy all the way.  Even the atoms are duplicated so that
     # they can be modified in one and do not affect the other at all.
@@ -33,7 +45,7 @@ describe Rubabel::Molecule do
     @mol.charge.should_not == another.charge
   end
 
-  it '#each iterates through each atom in id order' do
+  specify '#each iterates through each atom in id order' do
     cnt = 0
     @mol.each do |atom|
       atom.id.should == cnt
@@ -44,7 +56,7 @@ describe Rubabel::Molecule do
     @mol.atoms.size.should == 74
   end
 
-  it '#hydrogens_added?' do
+  specify '#hydrogens_added?' do
     @mol.hydrogens_added?.should be_false
     @mol.atoms.size.should == 33
     @mol.add_h!

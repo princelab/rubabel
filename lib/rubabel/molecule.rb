@@ -41,8 +41,22 @@ module Rubabel
       def from_string(string, type=DEFAULT_IN_TYPE)
         Rubabel.molecule_from_string(string, type)
       end
+
+      def from_atoms_and_bonds(atoms=[], bonds=[])
+        obj = self.new( OpenBabel::OBMol.new )
+        atoms.each {|atom| obj.add_atom(atom) }
+        bonds.each {|bond| obj.add_bond(bond) }
+        obj
+      end
     end
 
+    def add_atom(atom)
+      @ob.add_atom(atom.ob)
+    end
+
+    def delete_atom(atom)
+      @ob.delete_atom(atom.ob, false)
+    end
 
     # attributes
     def title() @ob.get_title end
@@ -69,8 +83,8 @@ module Rubabel
 
 
     def initialize(obmol, obconv=nil)
-      @obconv = obconv
       @ob = obmol
+      @obconv = obconv
     end
 
     # returns a list of atom indices matching the patterns (corresponds to
@@ -267,24 +281,34 @@ module Rubabel
     def delete(obj)
       case obj
       when Rubabel::Bond
-        delete_bond(obj)
+        delete_bond(obj, false)
       when Rubabel::Atom
-        delete_atom(obj)
+        delete_atom(obj, false)
       else 
         raise(ArgumentError, "don't know how to delete objects of type: #{obj.class}")
       end
     end
 
     def delete_bond(bond)
-      @ob.delete_bond(bond.ob)
+      @ob.delete_bond(bond.ob, false)
     end
 
     def delete_atom(atom)
-      @ob.delete_atom(atom.ob)
+      @ob.delete_atom(atom.ob, false)
     end
 
-    def add_bond(bond)
-      @ob.add_bond(bond.ob)
+    #def swap!(anchor1, to_move1, anchor2, to_move2)
+    #  OpenBabel::OBBuilder.swap(@ob, *[anchor1, to_move1, anchor2, to_move2].map {|at| at.ob.get_idx } )
+    #end
+
+    # takes a Rubabel::Bond object or a pair of Rubabel::Atom objects
+    def add_bond(*args)
+      case args.size
+      when 1
+        @ob.add_bond(args.first.ob)
+      when 2
+        @ob.add_bond(Rubabel::Bond[ *args ].ob)
+      end
     end
 
     # yields self after deleting the specified bonds.  When the block is

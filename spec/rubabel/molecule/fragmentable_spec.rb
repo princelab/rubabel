@@ -57,10 +57,9 @@ describe Rubabel::Molecule::Fragmentable do
 
     end
 
-    describe ':peroxy_to_carboxy', :pending do
+    describe ':peroxy_to_carboxy' do
       mol = Rubabel["NCCC(OO)CC"]
       fragments = mol.fragment( rules: [:peroxy_to_carboxy] )
-      p fragments
     end
 
     describe ':oxygen_asymmetric_sp3', :pending do
@@ -92,7 +91,7 @@ describe Rubabel::Molecule::Fragmentable do
         end
       end
 
-      describe 'backbone cleavage' do
+      describe 'backbone cleavage', :pending do
 
         it 'does not cleave esters without sp3 carbons available for double bond' do
           mol = Rubabel["NCCC(=O)OC"]
@@ -113,7 +112,7 @@ describe Rubabel::Molecule::Fragmentable do
       end
     end
 
-    describe ':alcohol_to_aldehyde' do
+    describe ':alcohol_to_aldehyde', :pending do
       it 'cleaves beside alcohols to generate an aldehyde' do
         mol = Rubabel["NCCC(O)CC"]
         mol.correct_for_ph!
