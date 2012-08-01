@@ -1,13 +1,25 @@
 require 'rspec'
 require 'stringio'
 
-# Requires supporting files with custom matchers and macros, etc,
-# in ./support/ and its subdirectories.
-#Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
+require 'rspec/core/formatters/progress_formatter'
+# doesn't say so much about pending guys
+class QuietPendingFormatter < RSpec::Core::Formatters::ProgressFormatter
+  def example_pending(example)
+    output.print yellow('*')
+  end
+end
+
+require 'rspec/core/formatters/documentation_formatter'
+class QuietPendingDocFormatter < RSpec::Core::Formatters::DocumentationFormatter
+  def example_pending(example)
+    output.puts yellow( "<pending>: #{example.execution_result[:pending_message]}" )
+  end
+end
+
 
 RSpec.configure do |config|
   config.treat_symbols_as_metadata_keys_with_true_values = true
-  config.formatter = :documentation  
+  config.formatter = QuietPendingDocFormatter
   config.color = true
 end
 
@@ -32,6 +44,4 @@ module Kernel
   ensure
     $stderr = STDERR
   end
-
-
 end

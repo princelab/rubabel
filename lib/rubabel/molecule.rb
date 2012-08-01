@@ -283,6 +283,10 @@ module Rubabel
       @ob.delete_atom(atom.ob)
     end
 
+    def add_bond(bond)
+      @ob.add_bond(bond.ob)
+    end
+
     # yields self after deleting the specified bonds.  When the block is
     # closed the bonds are restored.  Returns whatever is returned from the
     # block.

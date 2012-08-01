@@ -9,6 +9,10 @@ module Rubabel
         :oxygen_asymmetric, :nitrogen_asymmetric,
       ]
       #ADDUCTS = [:lioh, :nh4cl, :nh4oh]
+      CO_RULES = Set[:alcohol_to_aldehyde, :peroxy_to_carboxy, :co2_loss, 
+        :sp3c_oxygen_double_bond, :oxygen_asymmetric
+      ]
+
 
       DEFAULT_OPTIONS = {
         rules: RULES,
@@ -27,6 +31,14 @@ module Rubabel
       #     
       def allowable_fragmentation?(frags)
         self.num_atoms == frags.map(&:num_atoms).reduce(:+)
+      end
+
+      # add_h! to self, then selects allowable fragments
+      def allowable_fragment_sets!(fragment_sets)
+        self.add_h!
+        fragment_sets.select do |_frags| 
+          self.allowable_fragmentation?(_frags)
+        end
       end
 
       # will turn bond into a double bond, yield the changed molecule, then
@@ -71,11 +83,7 @@ module Rubabel
             frags.map(&:add_h!)
           end
         end
-        self.add_h!
-        frag_sets.select! do |_frags| 
-          self.allowable_fragmentation?(_frags)
-        end
-        frag_sets
+        allowable_fragment_sets!(frag_sets)
       end
 
 
@@ -86,6 +94,9 @@ module Rubabel
       #     :uniq => false 
       def fragment(opts={})
         opts = DEFAULT_OPTIONS.merge(opts)
+        opts[:rules].each do |rule| 
+          raise ArgumentError, "bad rule: #{rule}" unless RULES.include?(rule)
+        end
 
         had_hydrogens = self.h_added?
 
@@ -94,75 +105,79 @@ module Rubabel
 
         rules = opts[:rules]
         fragments = []
-        # note: this will *not* match C=O
-        self.each_match("CO").each do |_atoms|
-          (carbon, oxygen) = _atoms
-          carbon_nbrs = carbon.atoms.reject {|atom| atom == oxygen }
-          c3_nbrs = carbon_nbrs.select {|atm| atm.type == 'C3' }
-          c2_nbrs = carbon_nbrs.select {|atm| atm.type == 'C2' }
-          o_co2_nbrs = carbon_nbrs.select {|atm| atm.type == 'O.co2' }
-          num_oxygen_bonds = oxygen.bonds.size
-          # pulling this out here causes it to work incorrectly internally
-          # (not sure why)
-          #co_bond = carbon.get_bond(oxygen)
+        if rules.any? {|rule| CO_RULES.include?(rule) }
+          self.each_match("CO").each do |_atoms|
+            # note: this will *not* match C=O
+            (carbon, oxygen) = _atoms
+            carbon_nbrs = carbon.atoms.reject {|atom| atom == oxygen }
+            c3_nbrs = carbon_nbrs.select {|atm| atm.type == 'C3' }
+            # pulling this out here causes it to work incorrectly internally
+            # (not sure why)
+            #co_bond = carbon.get_bond(oxygen)
 
-          case num_oxygen_bonds # non-hydrogen bonds
-          when 1  # *must* be an alcohol: C-OH or a carboxylic acid
-            # water loss
-            if (c3_nbrs.size > 0 || c2_nbrs.size > 0) && !carbon.carboxyl_carbon?
-              if rules.include?(:h2oloss)
-                frag_sets = (c2_nbrs + c3_nbrs).map do |dbl_bondable_atom|
-                  frags = feint_double_bond(dbl_bondable_atom.get_bond(carbon)) do |_mol|
-                    # TODO: check accuracy before completely splitting for efficiency
-                    frags = _mol.split(carbon.get_bond(oxygen))
+            case oxygen.bonds.size # non-hydrogen bonds
+            when 1  # *must* be an alcohol or a carboxylic acid
+              if carbon.type == 'C3'
+                if rules.include?(:sp3c_oxygen_double_bond) 
+                  fragments.push *near_side_double_bond_break(carbon, oxygen)
+                end
+                if rules.include?(:alcohol_to_aldehyde)
+                  # alcohol becomes a ketone and one R group is released
+                  frag_sets = carbon_nbrs.select {|atom| atom.type == 'C3' }.map do |_atom|
+                    frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
+                      frags = _mol.split(carbon.get_bond(_atom))
+                      frags.map(&:add_h!)
+                    end
+                  end
+                  fragments.push *allowable_fragment_sets!(frag_sets)
+                end
+              elsif carbon.carboxyl_carbon?
+                if rules.include?(:co2_loss) && c3_nbr=c3_nbrs.first
+                  # carboxyl rules ...
+                  # neutral carbon dioxide loss with anion gain on attaching group
+                  # (if carbon)
+                  frags = feint_double_bond(carbon.get_bond(oxygen), oxygen, c3_nbr) do |_mol|
+                    frags = _mol.split(c3_nbr.get_bond(carbon))
                     frags.map(&:add_h!)
                   end
+                  fragments.push *allowable_fragment_sets!([frags])
                 end
-
-                self.add_h!
-                frag_sets.select! do |_frags| 
-                  self.allowable_fragmentation?(_frags)
-                end
-                fragments.push *frag_sets
               end
-              if rules.include?(:co)
-                # alcohol becomes a ketone and one R group is released
-                frag_sets = c3_nbrs.map do |neighbor_atom|
-                  frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
-                    frags = _mol.split(carbon.get_bond(neighbor_atom))
-                    frags.map(&:add_h!)
+            when 2
+              if carbon.type == 'C3'
+                if rules.include?(:peroxy_to_carboxy)
+                  if distal_o=oxygen.atoms.find {|atom| atom.el == :o }  # has a neighbor oxygen
+                    if distal_o.bonds.size == 1  # this is a peroxy
+                      orig_o_oh_bond = distal_o.get_bond(oxygen)
+
+                      new_oh_bond = Rubabel::Bond[ carbon, distal_o ]
+                      delete_bond(orig_o_oh_bond)
+                      add_bond(new_oh_bond)
+
+                      frag_sets = carbon_nbrs.select {|atom| atom.type == 'C3' }.map do |_atom|
+                        frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
+                          frags = _mol.split(carbon.get_bond(_atom))
+                          frags.map(&:add_h!)
+                        end
+                      end
+                      fragments.push *allowable_fragment_sets!(frag_sets)
+
+                      delete_bond(new_oh_bond)
+                      add_bond(orig_o_oh_bond)
+                    end
                   end
                 end
-
-                self.add_h!
-                frag_sets.select! do |_frags| 
-                  self.allowable_fragmentation?(_frags)
+                # ester and ethers (look *only* on close side for places to make
+                # double bond)
+                if rules.include?(:sp3c_oxygen_double_bond)
+                  fragments.push *near_side_double_bond_break(carbon, oxygen)
                 end
-                fragments.push *frag_sets
-              end
-            elsif carbon.carboxyl_carbon?
-              if c3_nbr=c3_nbrs.first
-                # carboxyl rules ...
-                # neutral carbon dioxide loss with anion gain on attaching group
-                # (if carbon)
-                frags = feint_double_bond(carbon.get_bond(oxygen), oxygen, c3_nbr) do |_mol|
-                  frags = _mol.split(c3_nbr.get_bond(carbon))
-                  frags.map(&:add_h!)
-                end
-                self.add_h!
-                fragments.push(frags) if self.allowable_fragmentation?(frags)
+                # note: the case of a carboxy is found with CO search
               end
             end
-          when 2
-            # ester and ethers (look *only* on close side for places to make
-            # double bond)
-            if carbon.type == 'C3'
-              fragments.push *near_side_double_bond_break(carbon, oxygen)
-            end
-            # note: the case of a carboxy is found with CO search
           end
         end
-        if rules.include?(:cn)
+        if rules.include?(:sp3c_nitrogen_double_bond)
           self.each_match("CN") do |_atoms|
             (carbon, nitrogen) = _atoms
             num_nitrogen_bonds = nitrogen.bonds.size
