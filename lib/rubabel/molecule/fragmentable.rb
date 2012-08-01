@@ -2,7 +2,7 @@
 module Rubabel
   class Molecule
     module Fragmentable
-      RULES = [:co]
+      RULES = [:co, :nh]
       #ADDUCTS = [:lioh, :nh4cl, :nh4oh]
 
       DEFAULT_OPTIONS = {
@@ -27,16 +27,63 @@ module Rubabel
       # will turn bond into a double bond, yield the changed molecule, then
       # return the bond to the original state when the block is closed
       # returns whatever the block returned
-      def feint_double_bond(bond, &block)
+      def feint_double_bond(bond, give_e_pair=nil, get_e_pair=nil, &block)
         orig = bond.bond_order
         bond.bond_order = 2
+        if give_e_pair
+          gc_orig = give_e_pair.charge
+          give_e_pair.charge = gc_orig + 1
+        end
+        if get_e_pair
+          rc_orig = get_e_pair.charge
+          get_e_pair.charge = rc_orig - 1
+        end
         reply = block.call(self)
         bond.bond_order = orig
+        give_e_pair.charge = gc_orig if give_e_pair
+        get_e_pair.charge = rc_orig if get_e_pair
         reply
       end
 
+      def feint_e_transfer(give_e_pair=nil, get_e_pair=nil, &block)
+        if give_e_pair
+          gc_orig = give_e_pair.charge
+          give_e_pair.charge = gc_orig + 1
+        end
+        if get_e_pair
+          rc_orig = get_e_pair.charge
+          get_e_pair.charge = rc_orig - 1
+        end
+
+        reply = block.call(self)
+        
+        give_e_pair.charge = gc_orig if give_e_pair
+        get_e_pair.charge = rc_orig if get_e_pair
+
+        reply
+      end
+
+
+      def near_side_double_bond_break(carbon, electrophile)
+        frag_sets = carbon.atoms.select {|atom| atom.type == "C3" }.map do |near_c3|
+          frags = feint_double_bond(carbon.get_bond(near_c3)) do |block|
+            frags = self.split(electrophile.get_bond(carbon))
+            frags.map(&:add_h!)
+          end
+        end
+        self.add_h!
+        frag_sets.select! do |_frags| 
+          self.allowable_fragmentation?(_frags)
+        end
+        frag_sets
+      end
+
+
       # to ensure proper fragmentation, will add_h!(ph) first at the given ph
       # an empty array is returned if there are no fragments generated.
+      #
+      #     :ph => 7.4
+      #     :uniq => false 
       def fragment(opts={})
         opts = DEFAULT_OPTIONS.merge(opts)
 
@@ -47,18 +94,20 @@ module Rubabel
 
         rules = opts[:rules]
         fragments = []
+        # note: this will *not* match C=O
         self.each_match("CO").each do |_atoms|
           (carbon, oxygen) = _atoms
           carbon_nbrs = carbon.atoms.reject {|atom| atom == oxygen }
           c3_nbrs = carbon_nbrs.select {|atm| atm.type == 'C3' }
           c2_nbrs = carbon_nbrs.select {|atm| atm.type == 'C2' }
+          o_co2_nbrs = carbon_nbrs.select {|atm| atm.type == 'O.co2' }
           num_oxygen_bonds = oxygen.bonds.size
           # pulling this out here causes it to work incorrectly internally
           # (not sure why)
           #co_bond = carbon.get_bond(oxygen)
 
-          case num_oxygen_bonds
-          when 1  # an alcohol
+          case num_oxygen_bonds # non-hydrogen bonds
+          when 1  # *must* be an alcohol: C-OH or a carboxylic acid
             # water loss
             if (c3_nbrs.size > 0 || c2_nbrs.size > 0) && !carbon.carboxyl_carbon?
               if rules.include?(:h2oloss)
@@ -91,34 +140,41 @@ module Rubabel
                 end
                 fragments.push *frag_sets
               end
-
-              if rules.include?(:co) && (num_oxygen_bonds == 2)
-                if oxygen
-
-
-                  # alcohol becomes a ketone and one R group is released
-                  frag_sets = c3_nbrs.map do |neighbor_atom|
-                    frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
-                      frags = _mol.split(carbon.get_bond(neighbor_atom))
-                      frags.map(&:add_h!)
-                    end
-                  end
-
-                  self.add_h!
-                  frag_sets.select! do |_frags| 
-                    self.allowable_fragmentation?(_frags)
-                  end
-                  fragments.push *frag_sets
+            elsif carbon.carboxyl_carbon?
+              if c3_nbr=c3_nbrs.first
+                # carboxyl rules ...
+                # neutral carbon dioxide loss with anion gain on attaching group
+                # (if carbon)
+                frags = feint_double_bond(carbon.get_bond(oxygen), oxygen, c3_nbr) do |_mol|
+                  frags = _mol.split(c3_nbr.get_bond(carbon))
+                  frags.map(&:add_h!)
                 end
-
+                self.add_h!
+                fragments.push(frags) if self.allowable_fragmentation?(frags)
               end
             end
-            # oxygen bonded to something else (per-oxide??)
-            # also could be ether situation...
-          when 2  
-            raise NotImplementedError
+          when 2
+            # ester and ethers (look *only* on close side for places to make
+            # double bond)
+            if carbon.type == 'C3'
+              fragments.push *near_side_double_bond_break(carbon, oxygen)
+            end
+            # note: the case of a carboxy is found with CO search
           end
         end
+        if rules.include?(:cn)
+          self.each_match("CN") do |_atoms|
+            (carbon, nitrogen) = _atoms
+            num_nitrogen_bonds = nitrogen.bonds.size
+            case num_nitrogen_bonds
+            when 2
+              if carbon.type == 'C3'
+                fragments.push *near_side_double_bond_break(carbon, nitrogen)
+              end
+            end
+          end
+        end
+
         unless had_hydrogens
           fragments.each {|set| set.each(&:remove_h!) }
           self.remove_h!
