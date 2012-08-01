@@ -6,7 +6,7 @@ describe Rubabel::Molecule::Fragmentable do
 
   let(:test_mol) { "COP(=O)(O)OCNCOCC(OO)C(=O)O" }
 
-  describe 'the :cn rule' do
+  describe 'the :sp3c_nitrogen_double_bond rule' do
 
     it 'cleaves like an ether a secondary NH group if possible' do
       mol = Rubabel["CCNC"]
@@ -19,7 +19,6 @@ describe Rubabel::Molecule::Fragmentable do
 
     it 'will not cleave if not possible' do
     end
-
 
   end
 

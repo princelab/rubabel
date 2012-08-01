@@ -1,8 +1,13 @@
+require 'set'
 
 module Rubabel
   class Molecule
     module Fragmentable
-      RULES = [:co, :nh]
+
+      RULES = Set[ :alcohol_to_aldehyde, :peroxy_to_carboxy, :co2_loss, 
+        :sp3c_oxygen_double_bond, :sp3c_nitrogen_double_bond,
+        :oxygen_asymmetric, :nitrogen_asymmetric,
+      ]
       #ADDUCTS = [:lioh, :nh4cl, :nh4oh]
 
       DEFAULT_OPTIONS = {
@@ -30,18 +35,13 @@ module Rubabel
       def feint_double_bond(bond, give_e_pair=nil, get_e_pair=nil, &block)
         orig = bond.bond_order
         bond.bond_order = 2
-        if give_e_pair
-          gc_orig = give_e_pair.charge
-          give_e_pair.charge = gc_orig + 1
-        end
-        if get_e_pair
-          rc_orig = get_e_pair.charge
-          get_e_pair.charge = rc_orig - 1
-        end
-        reply = block.call(self)
+        reply = 
+          if give_e_pair || get_e_pair
+            feint_e_transfer(give_e_pair, get_e_pair, &block)
+          else
+            block.call(self)
+          end
         bond.bond_order = orig
-        give_e_pair.charge = gc_orig if give_e_pair
-        get_e_pair.charge = rc_orig if get_e_pair
         reply
       end
 
