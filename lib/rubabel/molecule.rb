@@ -300,11 +300,7 @@ module Rubabel
     # swaps to_move1 for to_move2 on the respective anchors
     # returns self
     def swap!(anchor1, to_move1, anchor2, to_move2)
-      #OpenBabel::OBBuilder.swap(@ob, *[anchor1, to_move1, anchor2, to_move2].map {|at| at.ob.get_idx } )
-      delete_bond(anchor1.get_bond(to_move1))
-      delete_bond(anchor2.get_bond(to_move2))
-      add_bond(anchor1, to_move2)
-      add_bond(anchor2, to_move1)
+      OpenBabel::OBBuilder.swap(@ob, *[anchor1, to_move1, anchor2, to_move2].map {|at| at.ob.get_idx } )
       self
     end
 

@@ -14,8 +14,9 @@ module Rubabel
     include Enumerable
 
     class << self
+=begin
       def [](atom1, atom2, bond_order=1, index=0)
-        abort 'here'
+        abort 'cannot get bond generated properly yet, arghhh!'
         flags = 0
         obbond = OpenBabel::OBBond.new
         p obbond
@@ -29,6 +30,7 @@ module Rubabel
         obbond.set_bond_order(bond_order)
         self.new(obbond)
       end
+=end
     end
 
     attr_accessor :ob

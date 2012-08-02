@@ -25,31 +25,30 @@ describe Rubabel::Molecule do
     end
   end
 
-  specify '#add_bond adds a bond (and updates atoms)' do
-    c = Rubabel::Atom[:c]
-    o = Rubabel::Atom[:o]
-    mol = Rubabel::Molecule.from_atoms_and_bonds([c,o])
-    mol.add_bond(c,o)
-    puts "BONDS:"
-    p mol.bonds
-    puts "ATOMS:"
-    p mol.atoms
-    puts "C ATOMS:"
-    p c.atoms
-    puts "O ATOMS:"
-    p o.atoms
-  end
+#  specify '#add_bond adds a bond (and updates atoms)' do
+#    c = Rubabel::Atom[:c]
+#    o = Rubabel::Atom[:o]
+#    mol = Rubabel::Molecule.from_atoms_and_bonds([c,o])
+#    mol.add_bond(c,o)
+#    puts "BONDS:"
+#    p mol.bonds
+#    puts "ATOMS:"
+#    p mol.atoms
+#    puts "C ATOMS:"
+#    p c.atoms
+#    puts "O ATOMS:"
+#    p o.atoms
+#  end
 
-  xspecify '#swap! can swap atoms' do
+  specify '#swap! can swap atoms around' do
     mol = Rubabel["NCC(=O)O"]
-    atoms = mol.atoms
-    p mol.atoms
-    p mol.bonds
-    p mol
-    p mol.swap!(atoms[1], atoms[0], atoms[3], atoms[4])
-    p mol
-    p mol.atoms
-    p mol.bonds
+    carboxy_carbon = mol.atoms.find {|atom| atom.type == 'Cac' }
+    single_bonded_oxygen = mol.atoms.find {|atom| atom.type == 'O.co2' && atom.get_bond(carboxy_carbon).bond_order == 1 }
+    nit_carbon = mol.atoms.find {|atom| atom.atoms.any? {|nbr| nbr.type == 'N3' } }
+    nitrogen = mol.atoms.find {|atom| atom.el == :n }
+    swapped = mol.swap!(nit_carbon, nitrogen, carboxy_carbon, single_bonded_oxygen)
+    swapped.should == mol
+    swapped.csmiles.should == 'NC(=O)CO'
   end
 
   specify '#dup creates an entirely new molecule based on the first' do
