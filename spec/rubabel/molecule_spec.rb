@@ -25,7 +25,22 @@ describe Rubabel::Molecule do
     end
   end
 
-  specify '#swap! can swap atoms' do
+  specify '#add_bond adds a bond (and updates atoms)' do
+    c = Rubabel::Atom[:c]
+    o = Rubabel::Atom[:o]
+    mol = Rubabel::Molecule.from_atoms_and_bonds([c,o])
+    mol.add_bond(c,o)
+    puts "BONDS:"
+    p mol.bonds
+    puts "ATOMS:"
+    p mol.atoms
+    puts "C ATOMS:"
+    p c.atoms
+    puts "O ATOMS:"
+    p o.atoms
+  end
+
+  xspecify '#swap! can swap atoms' do
     mol = Rubabel["NCC(=O)O"]
     atoms = mol.atoms
     p mol.atoms

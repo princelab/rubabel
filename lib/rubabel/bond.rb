@@ -14,10 +14,19 @@ module Rubabel
     include Enumerable
 
     class << self
-      def [](atom1, atom2)
+      def [](atom1, atom2, bond_order=1, index=0)
+        abort 'here'
+        flags = 0
         obbond = OpenBabel::OBBond.new
-        obbond.set_begin(atom1.ob)
-        obbond.set_end(atom2.ob)
+        p obbond
+        obbond.set(index, atom1.ob, atom2.ob, bond_order, flags)
+        #obbond.set_end(atom2.ob)
+        p obbond
+        puts "GEGIN:"
+        p obbond.get_begin_atom.get_id
+        puts "END:"
+        p obbond.get_end_atom.get_id
+        obbond.set_bond_order(bond_order)
         self.new(obbond)
       end
     end

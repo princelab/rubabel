@@ -297,17 +297,30 @@ module Rubabel
       @ob.delete_atom(atom.ob, false)
     end
 
-    #def swap!(anchor1, to_move1, anchor2, to_move2)
-    #  OpenBabel::OBBuilder.swap(@ob, *[anchor1, to_move1, anchor2, to_move2].map {|at| at.ob.get_idx } )
-    #end
+    # swaps to_move1 for to_move2 on the respective anchors
+    # returns self
+    def swap!(anchor1, to_move1, anchor2, to_move2)
+      #OpenBabel::OBBuilder.swap(@ob, *[anchor1, to_move1, anchor2, to_move2].map {|at| at.ob.get_idx } )
+      delete_bond(anchor1.get_bond(to_move1))
+      delete_bond(anchor2.get_bond(to_move2))
+      add_bond(anchor1, to_move2)
+      add_bond(anchor2, to_move1)
+      self
+    end
 
     # takes a Rubabel::Bond object or a pair of Rubabel::Atom objects
     def add_bond(*args)
       case args.size
       when 1
-        @ob.add_bond(args.first.ob)
+        ob_bond = args.first.ob
+        @ob.add_bond(ob_bond)
+        ob_bond.get_begin_atom.add_bond(ob_bond)
+        ob_bond.get_end_atom.add_bond(ob_bond)
       when 2
-        @ob.add_bond(Rubabel::Bond[ *args ].ob)
+        ob_bond = Rubabel::Bond[ *args ].ob
+        ob_bond.get_begin_atom.add_bond(ob_bond)
+        ob_bond.get_end_atom.add_bond(ob_bond)
+        @ob.add_bond(ob_bond)
       end
     end
 
