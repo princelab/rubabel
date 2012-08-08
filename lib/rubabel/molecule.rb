@@ -334,6 +334,8 @@ module Rubabel
       reply
     end
 
+    # splits the molecules at the given bonds and returns the fragments.  Does
+    # not alter the caller.
     def split(*bonds)
       delete_and_restore_bonds(*bonds) do |mol|
         mol.ob.separate.map(&:upcast)

@@ -1,4 +1,5 @@
 require 'set'
+require 'rubabel/core_ext/putsv'
 
 module Rubabel
   class Molecule
@@ -37,6 +38,9 @@ module Rubabel
       def allowable_fragment_sets!(fragment_sets)
         self.add_h!
         fragment_sets.select do |_frags| 
+          putsv "ExMAIN:"
+          putsv _frags.inspect
+          putsv self.allowable_fragmentation?(_frags)
           self.allowable_fragmentation?(_frags)
         end
       end
@@ -57,12 +61,13 @@ module Rubabel
         reply
       end
 
+      # warning, this method adds_h! to the calling molecule
       def electrophile_snatches_electrons(carbon, electrophile)
-        frag_set = feint_e_transfer(carbon, electrophile) do |_mol|
-          frags = _mol.split(carbon.get_bond(electrophile))
-          frags.map(&:add_h!)
-        end
-        allowable_fragment_sets!([frag_set])
+        self.add_h!
+        frags = self.split(carbon.get_bond(electrophile))
+        raise NotImplementedError
+        # don't check for allowable fragments because it 
+        #allowable_fragment_sets!([frag_set])
       end
 
       def feint_e_transfer(give_e_pair=nil, get_e_pair=nil, &block)
@@ -156,6 +161,7 @@ module Rubabel
         rules = opts[:rules]
         fragments = []
         if rules.any? {|rule| CO_RULES.include?(rule) }
+          putsv "matching C-O"
           self.each_match("CO").each do |_atoms|
             # note: this will *not* match C=O
             (carbon, oxygen) = _atoms
@@ -167,21 +173,26 @@ module Rubabel
 
             case oxygen.bonds.size # non-hydrogen bonds
             when 1  # *must* be an alcohol or a carboxylic acid
+              putsv "#{csmiles} oxygen has no other bonds besides C-O (alcohol or carboxylic acid)"
               if carbon.type == 'C3'
                 if rules.include?(:sp3c_oxygen_double_bond_water_loss) 
+                  putsv "rule :sp3c_oxygen_double_bond_water_loss"
                   fragments.push *near_side_double_bond_break(carbon, oxygen)
                 end
                 if rules.include?(:alcohol_to_aldehyde)
+                    putsv "rule :alcohol_to_aldehyde"
                   fragments.push *alcohol_to_aldehyde(carbon, oxygen, carbon_nbrs)
                 end
               elsif carbon.carboxyl_carbon?
                 if rules.include?(:co2_loss)
+                  putsv "rule :co2_loss"
                   if c3_nbr = c3_nbrs.first
                     fragments.push *co2_loss(carbon, oxygen, c3_nbr)
                   end
                 end
               end
             when 2
+              putsv "#{csmiles} c-o & oxygen has 2 non-hydrogen bonds"
               oxygen_nbr = oxygen.atoms.reject {|atom| atom.idx == carbon.idx }.first
               if carbon.type == 'C3'
                 if rules.include?(:peroxy_to_carboxy)
@@ -191,15 +202,20 @@ module Rubabel
                 # double bond)
 
                 if oxygen_nbr.type == 'C3'
+                  putsv "oxygen nbr is C3"
                   if rules.include?(:sp3c_oxygen_double_bond_far_side_sp3) 
+                    putsv "rule :sp3c_oxygen_double_bond_far_side_sp3"
                     fragments.push *near_side_double_bond_break(carbon, oxygen)
                   end
                   if rules.include?(:sp3c_oxygen_asymmetric_far_sp3)
-                    fragments.push *electrophile_snatches_electrons(carbon, oxygen)
+                    putsv "rule :sp3c_oxygen_asymmetric_far_sp3"
+                    # only returns a single frag set
+                    fragments.push electrophile_snatches_electrons(carbon, oxygen)
                   end
                 end
                 if oxygen_nbr.type == 'C2'
                   if rules.include?(:sp3c_oxygen_double_bond_far_side_sp2)
+                    putsv "rule :sp3c_oxygen_double_bond_far_side_sp2"
                     fragments.push *near_side_double_bond_break(carbon, oxygen)
                   end
                 end
@@ -232,80 +248,4 @@ module Rubabel
     include Fragmentable
   end
 end
-
-
-  #          co_bond = carbon.get_bond(oxygen)
-  #            left_to_c_bond = carbon.get_bond(left)
-  #            right_to_c_bond = carbon.get_bond(right)
-  #
-  #            co_bond.bond_order = 2
-  #
-  #            [left_to_c_bond, right_to_c_bond].flat_map do |other_to_c_bond|
-  #              mol.ob.delete_bond(other_to_c_bond.ob, false)
-  #              pieces = mol.ob.separate.map(&:upcast)
-  #              mol.ob.add_bond(other_to_c_bond.ob)
-  #              pieces
-  #            end
-
-
-=begin
-
-        # duplicate the molecule so we can do what we like with it
-        mol = self.dup
-
-        has_hydrogens_added = h_added?
-        mol.remove_h! if has_hydrogens_added
-
-        mol.correct_for_ph!(opts[:ph])
-
-        rules = opts[:rules]
-        fragments = []
-        if rules.include?(:co)
-          mol.each_match("C(O)").flat_map do |_atoms|
-            carbon = _atoms.first
-            non_oxygen = carbon.each_bond.reject {|bond| bond.include?(_atoms.last) }
-            non_oxygen.each {|bond| p mol.split(bond) }
-
-            fragments.push *non_oxygen.flat_map {|bond| mol.split(bond) }
-          end
-        end
-        p fragments
-        abort 'here'
-        fragments.each(&:add_h!) if has_hydrogens_added
-        fragments
-      end
-    end
-
-=end
-
-
-  #            [[left_to_c_bond, left], [right_to_c_bond, right]].flat_map do |other_to_carbony_c, other|
-  #              puts "INSIDE!!!"
-  #              pieces = mol.split(other_to_carbony_c)
-  #              c_in_pieces = nil
-  #              oxy_in_pieces = nil
-  #              other_in_pieces = nil
-  #              pieces.each do |piece| 
-  #                piece.each_atom do |atom| 
-  #                  p piece
-  #                  p [atom.id, other.id]
-  #                  other_in_pieces = atom if atom.id == other.id
-  #                  c_in_pieces = atom if atom.id == carbon.id 
-  #                  oxy_in_pieces = atom if atom.id == oxygen.id 
-  #                  break if c_in_pieces && oxy_in_pieces
-  #                end
-  #                break if c_in_pieces && oxy_in_pieces
-  #              end
-  #              oxygen_bond = c_in_pieces.get_bond(oxy_in_pieces)
-  #              oxygen_bond.bond_order = 2
-  #
-  #              puts "EXAMINE:other"
-  #              p other_in_pieces.ob
-  #              p other_in_pieces.mol.csmiles
-  #              other_mol = other_in_pieces.mol
-  #              ob_atom = other_mol.ob.new_atom
-  #              ob_atom.set_atomic_num 1
-  #              newbond = OpenBabel::OBBond.new 
-  #              ob_atom
-  #
 

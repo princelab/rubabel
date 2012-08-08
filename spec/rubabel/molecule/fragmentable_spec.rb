@@ -2,6 +2,8 @@ require 'spec_helper'
 
 require 'rubabel'
 
+$VERBOSE = nil
+
 describe Rubabel::Molecule::Fragmentable do
 
   # :peroxy_to_carboxy
@@ -66,14 +68,17 @@ describe Rubabel::Molecule::Fragmentable do
       end
     end
 
-    describe ':sp3c_oxygen_asymmetric_far_sp3' do
+    describe ':sp3c_oxygen_asymmetric_far_sp3', :pending do
       it 'splits like sp3c_oxygen_double_bond except oxygen takes the electrons' do
-        mol = Rubabel["NCCC(O)CC"]
-        mol = Rubabel["NCC(O)CC"]
-        mol = Rubabel["NC(O)CC"] 
-        p mol.sp3c_oxygen_asymmetric_far_sp3
-        HERERERERE
-        abort 'ehre'
+        $VERBOSE = 3
+        mol = Rubabel["NCCCOCC"]
+        frag_sets = mol.fragment( rules: [:sp3c_oxygen_asymmetric_far_sp3] )
+        $VERBOSE = nil
+        frag_sets.size.should == 2
+        #mol = Rubabel["NCCOCC"]
+        #p mol.fragment( rules: [:sp3c_oxygen_asymmetric_far_sp3] )
+        #mol = Rubabel["NCOC"] 
+        #p mol.fragment( rules: [:sp3c_oxygen_asymmetric_far_sp3] )
       end
     end
 
