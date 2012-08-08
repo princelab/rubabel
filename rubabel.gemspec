@@ -5,13 +5,14 @@
 
 Gem::Specification.new do |s|
   s.name = "rubabel"
-  s.version = "0.1.4"
+  s.version = "0.1.5"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["John T. Prince"]
   s.date = "2012-08-08"
   s.description = "Ruby interface to the openbabel ruby bindings (or the openbabel gem).  The\ninterface attempts to be a ruby-ish analogue of pybel."
   s.email = "jtprince@gmail.com"
+  s.executables = ["fragmenter.rb"]
   s.extra_rdoc_files = [
     "LICENSE",
     "README.rdoc"
@@ -23,9 +24,11 @@ Gem::Specification.new do |s|
     "README.rdoc",
     "Rakefile",
     "VERSION",
+    "bin/fragmenter.rb",
     "lib/rubabel.rb",
     "lib/rubabel/atom.rb",
     "lib/rubabel/bond.rb",
+    "lib/rubabel/core_ext/enumerable.rb",
     "lib/rubabel/core_ext/putsv.rb",
     "lib/rubabel/fingerprint.rb",
     "lib/rubabel/molecule.rb",
