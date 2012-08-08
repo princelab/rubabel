@@ -5,14 +5,13 @@
 
 Gem::Specification.new do |s|
   s.name = "rubabel"
-  s.version = "0.1.1"
+  s.version = "0.1.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["John T. Prince"]
-  s.date = "2012-05-31"
+  s.date = "2012-08-08"
   s.description = "Ruby interface to the openbabel ruby bindings (or the openbabel gem).  The\ninterface attempts to be a ruby-ish analogue of pybel."
   s.email = "jtprince@gmail.com"
-  s.executables = ["rubabel"]
   s.extra_rdoc_files = [
     "LICENSE",
     "README.rdoc"
@@ -24,10 +23,10 @@ Gem::Specification.new do |s|
     "README.rdoc",
     "Rakefile",
     "VERSION",
-    "bin/rubabel",
     "lib/rubabel.rb",
     "lib/rubabel/atom.rb",
     "lib/rubabel/bond.rb",
+    "lib/rubabel/core_ext/putsv.rb",
     "lib/rubabel/fingerprint.rb",
     "lib/rubabel/molecule.rb",
     "lib/rubabel/molecule/fragmentable.rb",
@@ -39,6 +38,7 @@ Gem::Specification.new do |s|
     "reference/arity_method_list_CLASS.txt",
     "reference/atom_methods.txt",
     "reference/bond_methods.txt",
+    "reference/fragmentation_rules_.pdf",
     "reference/get_methods.rb",
     "reference/mol_methods.txt",
     "rubabel.gemspec",
@@ -67,7 +67,7 @@ Gem::Specification.new do |s|
   s.homepage = "http://github.com/princelab/rubabel"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.18"
+  s.rubygems_version = "1.8.23"
   s.summary = "Ruby interface to the OpenBabel ruby bindings similar to pybel"
 
   if s.respond_to? :specification_version then
