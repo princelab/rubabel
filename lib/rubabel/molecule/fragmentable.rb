@@ -5,12 +5,12 @@ module Rubabel
     module Fragmentable
 
       RULES = Set[ :alcohol_to_aldehyde, :peroxy_to_carboxy, :co2_loss, 
-        :sp3c_oxygen_double_bond, :sp3c_nitrogen_double_bond,
-        :oxygen_asymmetric, :nitrogen_asymmetric,
+        :sp3c_oxygen_double_bond_far_side_sp3, :sp3c_oxygen_double_bond_far_side_sp2, :sp3c_oxygen_double_bond_water_loss, :sp3c_nitrogen_double_bond,
+        :sp3c_oxygen_asymmetric_far_sp3, :sp3c_nitrogen_asymmetric_far_sp3,
       ]
       #ADDUCTS = [:lioh, :nh4cl, :nh4oh]
       CO_RULES = Set[:alcohol_to_aldehyde, :peroxy_to_carboxy, :co2_loss, 
-        :sp3c_oxygen_double_bond, :oxygen_asymmetric
+        :sp3c_oxygen_double_bond_water_loss, :sp3c_oxygen_double_bond_far_side_sp2, :sp3c_oxygen_double_bond_far_side_sp3, :sp3c_oxygen_asymmetric_far_sp3
       ]
 
 
@@ -57,6 +57,14 @@ module Rubabel
         reply
       end
 
+      def electrophile_snatches_electrons(carbon, electrophile)
+        frag_set = feint_e_transfer(carbon, electrophile) do |_mol|
+          frags = _mol.split(carbon.get_bond(electrophile))
+          frags.map(&:add_h!)
+        end
+        allowable_fragment_sets!([frag_set])
+      end
+
       def feint_e_transfer(give_e_pair=nil, get_e_pair=nil, &block)
         if give_e_pair
           gc_orig = give_e_pair.charge
@@ -75,17 +83,59 @@ module Rubabel
         reply
       end
 
-
       def near_side_double_bond_break(carbon, electrophile)
         frag_sets = carbon.atoms.select {|atom| atom.type == "C3" }.map do |near_c3|
-          frags = feint_double_bond(carbon.get_bond(near_c3)) do |block|
-            frags = self.split(electrophile.get_bond(carbon))
+          frags = feint_double_bond(carbon.get_bond(near_c3)) do |_mol|
+            frags = _mol.split(electrophile.get_bond(carbon))
             frags.map(&:add_h!)
           end
         end
         allowable_fragment_sets!(frag_sets)
       end
 
+      def alcohol_to_aldehyde(carbon, oxygen, carbon_nbrs)
+        # alcohol becomes a ketone and one R group is released
+        frag_sets = carbon_nbrs.select {|atom| atom.type == 'C3' }.map do |_atom|
+          frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
+            frags = _mol.split(carbon.get_bond(_atom))
+            frags.map(&:add_h!)
+          end
+        end
+        allowable_fragment_sets!(frag_sets)
+      end
+
+      def co2_loss(carbon, oxygen, c3_nbr)
+        # carboxyl rules ...
+        # neutral carbon dioxide loss with anion gain on attaching group
+        # (if carbon)
+        frags = feint_double_bond(carbon.get_bond(oxygen), oxygen, c3_nbr) do |_mol|
+          frags = _mol.split(c3_nbr.get_bond(carbon))
+          frags.map(&:add_h!)
+        end
+        allowable_fragment_sets!([frags])
+      end
+
+      def peroxy_to_carboxy(carbon, oxygen, carbon_nbrs, oxygen_nbr)
+        if oxygen_nbr.el == :o # has a neighbor oxygen
+          distal_o = oxygen_nbr
+          if distal_o.bonds.size == 1  # this is a peroxy
+            frag_sets = carbon_nbrs.select {|atom| atom.type == 'C3' }.map do |_atom|
+              self.swap!(carbon, _atom, oxygen, distal_o)
+              frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
+
+                # we swapped the atoms so the bond to split off is now
+                # attached to the oxygen
+                frags = _mol.split(oxygen.get_bond(_atom))
+                frags.map(&:add_h!)
+              end
+              self.swap!(carbon, distal_o, oxygen, _atom)
+              frags
+            end
+            allowable_fragment_sets!(frag_sets)
+          end
+        end
+
+      end
 
       # to ensure proper fragmentation, will add_h!(ph) first at the given ph
       # an empty array is returned if there are no fragments generated.
@@ -104,7 +154,6 @@ module Rubabel
         self.remove_h!
 
         rules = opts[:rules]
-        p rules
         fragments = []
         if rules.any? {|rule| CO_RULES.include?(rule) }
           self.each_match("CO").each do |_atoms|
@@ -119,59 +168,40 @@ module Rubabel
             case oxygen.bonds.size # non-hydrogen bonds
             when 1  # *must* be an alcohol or a carboxylic acid
               if carbon.type == 'C3'
-                if rules.include?(:sp3c_oxygen_double_bond) 
+                if rules.include?(:sp3c_oxygen_double_bond_water_loss) 
                   fragments.push *near_side_double_bond_break(carbon, oxygen)
                 end
                 if rules.include?(:alcohol_to_aldehyde)
-                  # alcohol becomes a ketone and one R group is released
-                  frag_sets = carbon_nbrs.select {|atom| atom.type == 'C3' }.map do |_atom|
-                    frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
-                      frags = _mol.split(carbon.get_bond(_atom))
-                      frags.map(&:add_h!)
-                    end
-                  end
-                  fragments.push *allowable_fragment_sets!(frag_sets)
+                  fragments.push *alcohol_to_aldehyde(carbon, oxygen, carbon_nbrs)
                 end
               elsif carbon.carboxyl_carbon?
-                if rules.include?(:co2_loss) && c3_nbr=c3_nbrs.first
-                  # carboxyl rules ...
-                  # neutral carbon dioxide loss with anion gain on attaching group
-                  # (if carbon)
-                  frags = feint_double_bond(carbon.get_bond(oxygen), oxygen, c3_nbr) do |_mol|
-                    frags = _mol.split(c3_nbr.get_bond(carbon))
-                    frags.map(&:add_h!)
+                if rules.include?(:co2_loss)
+                  if c3_nbr = c3_nbrs.first
+                    fragments.push *co2_loss(carbon, oxygen, c3_nbr)
                   end
-                  fragments.push *allowable_fragment_sets!([frags])
                 end
               end
             when 2
+              oxygen_nbr = oxygen.atoms.reject {|atom| atom.idx == carbon.idx }.first
               if carbon.type == 'C3'
                 if rules.include?(:peroxy_to_carboxy)
-                  if distal_o=oxygen.atoms.find {|atom| atom.el == :o }  # has a neighbor oxygen
-                    if distal_o.bonds.size == 1  # this is a peroxy
-                      #orig_o_oh_bond = distal_o.get_bond(oxygen)
-
-                      #new_oh_bond = Rubabel::Bond[ carbon, distal_o ]
-                      #delete_bond(orig_o_oh_bond)
-                      #add_bond(new_oh_bond)
-
-                      frag_sets = carbon_nbrs.select {|atom| atom.type == 'C3' }.map do |_atom|
-                        frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
-                          frags = _mol.split(carbon.get_bond(_atom))
-                          frags.map(&:add_h!)
-                        end
-                      end
-                      fragments.push *allowable_fragment_sets!(frag_sets)
-
-                      #delete_bond(new_oh_bond)
-                      #add_bond(orig_o_oh_bond)
-                    end
-                  end
+                  fragments.push *peroxy_to_carboxy(carbon, oxygen, carbon_nbrs, oxygen_nbr)
                 end
                 # ester and ethers (look *only* on close side for places to make
                 # double bond)
-                if rules.include?(:sp3c_oxygen_double_bond)
-                  fragments.push *near_side_double_bond_break(carbon, oxygen)
+
+                if oxygen_nbr.type == 'C3'
+                  if rules.include?(:sp3c_oxygen_double_bond_far_side_sp3) 
+                    fragments.push *near_side_double_bond_break(carbon, oxygen)
+                  end
+                  if rules.include?(:sp3c_oxygen_asymmetric_far_sp3)
+                    fragments.push *electrophile_snatches_electrons(carbon, oxygen)
+                  end
+                end
+                if oxygen_nbr.type == 'C2'
+                  if rules.include?(:sp3c_oxygen_double_bond_far_side_sp2)
+                    fragments.push *near_side_double_bond_break(carbon, oxygen)
+                  end
                 end
                 # note: the case of a carboxy is found with CO search
               end

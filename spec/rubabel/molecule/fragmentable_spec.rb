@@ -19,7 +19,7 @@ describe Rubabel::Molecule::Fragmentable do
       expect { mol.fragment(rules: [:wackiness]) }.to raise_error
     end
 
-    describe ':sp3c_nitrogen_double_bond', :pending do
+    describe ':sp3c_nitrogen_double_bond' do
 
       it 'cleaves like an ether a secondary NH group if possible' do
         mol = Rubabel["CCNC"]
@@ -38,7 +38,7 @@ describe Rubabel::Molecule::Fragmentable do
 
     end
 
-    describe ':co2_loss', :pending do
+    describe ':co2_loss' do
       it 'loss of CO2 from carboxy group with charge transfer' do
         mol = Rubabel["NCC(=O)O"]
         frag_sets = mol.fragment( rules: [:co2_loss] )
@@ -58,61 +58,66 @@ describe Rubabel::Molecule::Fragmentable do
     end
 
     describe ':peroxy_to_carboxy' do
-      mol = Rubabel["NCCC(OO)CC"]
-      fragments = mol.fragment( rules: [:peroxy_to_carboxy] )
+      it 'works' do
+        mol = Rubabel["NCCC(OO)CC"]
+        frag_sets = mol.fragment( rules: [:peroxy_to_carboxy] )
+        frag_sets.size.should == 2 
+        frag_sets.flatten(1).map(&:csmiles).sort.should == ["CC", "CCC(=O)O", "CC[NH3+]", "OC(=O)CC[NH3+]"]
+      end
     end
 
-    describe ':oxygen_asymmetric_sp3', :pending do
+    describe ':sp3c_oxygen_asymmetric_far_sp3' do
       it 'splits like sp3c_oxygen_double_bond except oxygen takes the electrons' do
         mol = Rubabel["NCCC(O)CC"]
         mol = Rubabel["NCC(O)CC"]
         mol = Rubabel["NC(O)CC"] 
+        p mol.sp3c_oxygen_asymmetric_far_sp3
+        HERERERERE
+        abort 'ehre'
       end
     end
 
-    describe ':sp3c_oxygen_double_bond', :pending do
+    describe ':sp3c_oxygen_double_bond_water_loss' do
 
-      describe 'water loss' do
-        it 'does h2o loss of alcohol' do
-          mol = Rubabel["NCCC(O)CC"]
-          fragments = mol.fragment( rules: [:sp3c_oxygen_double_bond] )
-          fragments.flatten(1).map(&:csmiles).sort.should == ["CC=CCC[NH3+]", "CCC=CC[NH3+]", "O", "O"]
-        end
-
-        it 'h2o loss does not allow bad chemistry' do
-          # lone pair and double bond resonance ?
-          mol = Rubabel["NCC(O)CC"]
-          fragments = mol.fragment( rules: [:sp3c_oxygen_double_bond] )
-          fragments.flatten(1).map(&:csmiles).sort.should == ["CC=CC[NH3+]", "O"]
-
-          mol = Rubabel["NC(O)CC"] 
-          fragments = mol.fragment( rules: [:sp3c_oxygen_double_bond] )
-          fragments.flatten(1).map(&:csmiles).sort.should == []
-        end
+      it 'does h2o loss of alcohol' do
+        mol = Rubabel["NCCC(O)CC"]
+        fragments = mol.fragment( rules: [:sp3c_oxygen_double_bond_water_loss] )
+        fragments.flatten(1).map(&:csmiles).sort.should == ["CC=CCC[NH3+]", "CCC=CC[NH3+]", "O", "O"]
       end
 
-      describe 'backbone cleavage', :pending do
+      it 'h2o loss does not allow bad chemistry' do
+        # lone pair and double bond resonance ?
+        mol = Rubabel["NCC(O)CC"]
+        fragments = mol.fragment( rules: [:sp3c_oxygen_double_bond_water_loss] )
+        fragments.flatten(1).map(&:csmiles).sort.should == ["CC=CC[NH3+]", "O"]
 
-        it 'does not cleave esters without sp3 carbons available for double bond' do
-          mol = Rubabel["NCCC(=O)OC"]
-          pieces = mol.fragment( rules: [:sp3c_oxygen_double_bond] )
-          pieces.should be_empty
-        end
-
-        it 'cleaves esters on far side' do
-          mol = Rubabel["NCCC(=O)OCC"]
-          pieces = mol.fragment( rules: [:sp3c_oxygen_double_bond] )
-          pieces.size.should == 1  # one set
-          the_pair = pieces.first
-          csmiles = the_pair.map(&:csmiles)
-          csmiles.should include("OC(=O)CC[NH3+]")
-          csmiles.should include("C=C")
-        end
-
+        mol = Rubabel["NC(O)CC"] 
+        fragments = mol.fragment( rules: [:sp3c_oxygen_double_bond_water_loss] )
+        fragments.flatten(1).map(&:csmiles).sort.should == []
       end
     end
 
-    describe ':alcohol_to_aldehyde', :pending do
+    describe 'sp3c_oxygen_double_bond_far_side_sp2' do
+
+      it 'does not cleave esters without sp3 carbons available for double bond' do
+        mol = Rubabel["NCCC(=O)OC"]
+        pieces = mol.fragment( rules: [:sp3c_oxygen_double_bond_far_side_sp2] )
+        pieces.should be_empty
+      end
+
+      it 'cleaves esters on far side of singly bonded oxygen' do
+        mol = Rubabel["NCCC(=O)OCC"]
+        pieces = mol.fragment( rules: [:sp3c_oxygen_double_bond_far_side_sp2] )
+        pieces.size.should == 1  # one set
+        the_pair = pieces.first
+        csmiles = the_pair.map(&:csmiles)
+        csmiles.should include("OC(=O)CC[NH3+]")
+        csmiles.should include("C=C")
+      end
+
+    end
+
+    describe ':alcohol_to_aldehyde' do
       it 'cleaves beside alcohols to generate an aldehyde' do
         mol = Rubabel["NCCC(O)CC"]
         mol.correct_for_ph!
