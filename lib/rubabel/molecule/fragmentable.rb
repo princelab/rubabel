@@ -1,19 +1,19 @@
 require 'set'
 require 'rubabel/core_ext/putsv'
+require 'rubabel/core_ext/enumerable'
 
 module Rubabel
   class Molecule
     module Fragmentable
 
+      #:sp3c_oxygen_asymmetric_far_sp3, :sp3c_nitrogen_asymmetric_far_sp3,
       RULES = Set[ :alcohol_to_aldehyde, :peroxy_to_carboxy, :co2_loss, 
         :sp3c_oxygen_double_bond_far_side_sp3, :sp3c_oxygen_double_bond_far_side_sp2, :sp3c_oxygen_double_bond_water_loss, :sp3c_nitrogen_double_bond,
-        :sp3c_oxygen_asymmetric_far_sp3, :sp3c_nitrogen_asymmetric_far_sp3,
       ]
       #ADDUCTS = [:lioh, :nh4cl, :nh4oh]
       CO_RULES = Set[:alcohol_to_aldehyde, :peroxy_to_carboxy, :co2_loss, 
         :sp3c_oxygen_double_bond_water_loss, :sp3c_oxygen_double_bond_far_side_sp2, :sp3c_oxygen_double_bond_far_side_sp3, :sp3c_oxygen_asymmetric_far_sp3
       ]
-
 
       DEFAULT_OPTIONS = {
         rules: RULES,
@@ -159,7 +159,7 @@ module Rubabel
         self.remove_h!
 
         rules = opts[:rules]
-        fragments = []
+        fragment_sets = []
         if rules.any? {|rule| CO_RULES.include?(rule) }
           putsv "matching C-O"
           self.each_match("CO").each do |_atoms|
@@ -177,17 +177,17 @@ module Rubabel
               if carbon.type == 'C3'
                 if rules.include?(:sp3c_oxygen_double_bond_water_loss) 
                   putsv "rule :sp3c_oxygen_double_bond_water_loss"
-                  fragments.push *near_side_double_bond_break(carbon, oxygen)
+                  fragment_sets.push *near_side_double_bond_break(carbon, oxygen)
                 end
                 if rules.include?(:alcohol_to_aldehyde)
                     putsv "rule :alcohol_to_aldehyde"
-                  fragments.push *alcohol_to_aldehyde(carbon, oxygen, carbon_nbrs)
+                  fragment_sets.push *alcohol_to_aldehyde(carbon, oxygen, carbon_nbrs)
                 end
               elsif carbon.carboxyl_carbon?
                 if rules.include?(:co2_loss)
                   putsv "rule :co2_loss"
                   if c3_nbr = c3_nbrs.first
-                    fragments.push *co2_loss(carbon, oxygen, c3_nbr)
+                    fragment_sets.push *co2_loss(carbon, oxygen, c3_nbr)
                   end
                 end
               end
@@ -196,7 +196,7 @@ module Rubabel
               oxygen_nbr = oxygen.atoms.reject {|atom| atom.idx == carbon.idx }.first
               if carbon.type == 'C3'
                 if rules.include?(:peroxy_to_carboxy)
-                  fragments.push *peroxy_to_carboxy(carbon, oxygen, carbon_nbrs, oxygen_nbr)
+                  fragment_sets.push *peroxy_to_carboxy(carbon, oxygen, carbon_nbrs, oxygen_nbr)
                 end
                 # ester and ethers (look *only* on close side for places to make
                 # double bond)
@@ -205,18 +205,18 @@ module Rubabel
                   putsv "oxygen nbr is C3"
                   if rules.include?(:sp3c_oxygen_double_bond_far_side_sp3) 
                     putsv "rule :sp3c_oxygen_double_bond_far_side_sp3"
-                    fragments.push *near_side_double_bond_break(carbon, oxygen)
+                    fragment_sets.push *near_side_double_bond_break(carbon, oxygen)
                   end
                   if rules.include?(:sp3c_oxygen_asymmetric_far_sp3)
                     putsv "rule :sp3c_oxygen_asymmetric_far_sp3"
                     # only returns a single frag set
-                    fragments.push electrophile_snatches_electrons(carbon, oxygen)
+                    fragment_sets.push electrophile_snatches_electrons(carbon, oxygen)
                   end
                 end
                 if oxygen_nbr.type == 'C2'
                   if rules.include?(:sp3c_oxygen_double_bond_far_side_sp2)
                     putsv "rule :sp3c_oxygen_double_bond_far_side_sp2"
-                    fragments.push *near_side_double_bond_break(carbon, oxygen)
+                    fragment_sets.push *near_side_double_bond_break(carbon, oxygen)
                   end
                 end
                 # note: the case of a carboxy is found with CO search
@@ -231,17 +231,22 @@ module Rubabel
             case num_nitrogen_bonds
             when 2
               if carbon.type == 'C3'
-                fragments.push *near_side_double_bond_break(carbon, nitrogen)
+                fragment_sets.push *near_side_double_bond_break(carbon, nitrogen)
               end
             end
           end
         end
 
         unless had_hydrogens
-          fragments.each {|set| set.each(&:remove_h!) }
+          fragment_sets.each {|set| set.each(&:remove_h!) }
           self.remove_h!
         end
-        fragments
+        if opts[:uniq]
+          # TODO: impelent properly
+          #fragment_sets = fragment_sets.uniq_by(&:csmiles) 
+          raise NotImplementedError
+        end
+        fragment_sets
       end
 
     end
