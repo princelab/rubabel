@@ -1,0 +1,206 @@
+37c37
+<   it 'gets Heavy atom counts from an SD file' do
+---
+>   it 'Read an SD file and list the heavy atom counts' do
+46c46
+<   it 'gets Ring counts in a SMILES file' do
+---
+>   it 'Read a SMILES file and list the number of rings' do
+150,152c150
+<       (mol1, mol2) = %w{CC(C)C=CCCCCC(=O)NCc1ccc(c(c1)OC)O COC1=C(C=CC(=C1)C=O)O}.map do |smile| 
+<         Rubabel[smile]
+<       end
+---
+>       (mol1, mol2) = %w{CC(C)C=CCCCCC(=O)NCc1ccc(c(c1)OC)O COC1=C(C=CC(=C1)C=O)O}.map{|smile| Rubabel[smile]}
+161c159,160
+<     output = wiki_code_capture_stdout do
+---
+> 
+>    output = wiki_code_capture_stdout do
+163,171c162,168
+<       fp1 = nil
+<       comparisons = Rubabel.foreach("benzodiazepine.sdf.gz").map do |mol|
+<         if fp1
+<           [OpenBabel::OBFingerprint.tanimoto(fp1, mol.ob_fingerprint), mol.title]
+<         else
+<           (fp1 = mol.ob_fingerprint) && nil
+<         end
+<       end.compact
+<       puts comparisons.sort.reverse[0,10].map {|v| "#{v[0].round(3)} #{v[1]}" }
+---
+>       prev = nil
+> 			comp = []
+> 			Rubabel.foreach("benzodiazepine.sdf.gz").map do |mol|
+> 				prev = mol if prev.nil?
+> 				comp << [prev.tanimoto(mol), mol.title]
+> 			end
+> 			puts comp.sort.reverse[1,11].map {|v| "#{v[0].round(3)} #{v[1]}" }
+173,175c170
+<     output.should == "0.979 3016\n0.979 2997\n0.909 3369\n0.874 2809\n0.769 3299\n0.74 2802\n0.379 3261\n0.377 2118\n0.368 1963\n"
+<     # notes: still need a first class fingerprint object so this cleaner
+<     
+---
+>      output.should == "0.979 3016\n0.979 2997\n0.909 3369\n0.874 2809\n0.769 3299\n0.74 2802\n0.379 3261\n0.377 2118\n0.368 1963\n"
+177,195c172,182
+<     # 1.0 623918
+<     # 1.0 450820
+<     # 0.993 20351792
+<     # 0.986 9862446
+<     # 0.979 398658
+<     # 0.979 398657
+<     # 0.979 6452650
+<     # 0.979 450830
+<     # 0.979 44353759
+<     # 0.979 3016
+< 
+<     # this iterator method gives a segfault!! (not sure why)
+<     #mol_iter = Rubabel.foreach("benzodiazepine.sdf.gz")
+<     #fp1 = mol_iter.next.ob_fingerprint
+<     #loop do
+<     #  mol=mol_iter.next rescue break
+<     #  comparisons << [OpenBabel::OBFingerprint.tanimoto(fp1, mol.ob_fingerprint).round(2), mol.title]
+<     #end
+<     #puts comparisons.sort.reverse.map {|pair| pair.join(" ") }
+---
+> 		#1.0 450820
+> 		#1.0 1688
+> 		#0.993 20351792
+> 		#0.986 9862446
+> 		#0.979 398658
+> 		#0.979 398657
+> 		#0.979 6452650
+> 		#0.979 450830
+> 		#0.979 44353759
+> 		#0.979 3016
+> 		#0.979 2997
+198c185
+<   xit 'Depicts a compound as an image' do
+---
+>   it 'Depicts a compound as an image' do
+201,203c188,190
+<       # still need to work on this!
+<       #require 'rubabel'
+<       #Rubabel["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"].write_file("caffeine.svg")
+---
+>       require 'rubabel'
+> 			mol = Rubabel["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"]
+> 			mol.draw(opts = {:title=>"Caffiene", :size => 300})
+204a192,193
+> 		#OR, using commandline
+> 		#%x{obabel -:"CN1C=NC2=C1C(=O)N(C(=O)N2C)C" -O "mol.png" -xP 300}
+207,213c196,294
+<   xit 'Highlight a substructure in the depiction' do
+<     smarts = "c1ccc2c(c1)C(=NCCN2)c3ccccc3"
+<     mol = Rubabel.foreach("benzodiazepine.sdf.gz").find {|mol| mol.title == "3016" }
+<     p OpenBabel::OBConversion.constants
+<     p mol.obconv.get_options(OpenBabel::OBConversion.(:ALL))
+<     #mol.write("hello.svg")
+<   end
+---
+>  	it 'Highlight a substructure in the depiction' do
+> 		wiki_code do
+>       require 'rubabel'
+> 	    mol = Rubabel.foreach("benzodiazepine.sdf.gz").find {|mol| mol.title == "3016" }
+> 
+> 			conv = OpenBabel::OBConversion.new
+> 			conv.set_in_and_out_formats('smi','svg')
+> 			conv.add_option("s",OpenBabel::OBConversion::GENOPTIONS, "c1ccc2c(c1)C(=NCCN2)c3ccccc3 red")
+> 			conv.add_option("d",OpenBabel::OBConversion::GENOPTIONS) 	
+> 
+> 			mol.obconv.set_in_and_out_formats('smi','svg')
+> 			mol.obconv.add_option("u",OpenBabel::OBConversion::OUTOPTIONS)
+> 			mol.ob.do_transformations(conv.get_options(OpenBabel::OBConversion::GENOPTIONS), conv)
+> 			mol.draw(:filename=>"highlighted")
+> 		end
+>   end
+> 
+> 	xit 'Align the depiction using a fixed substructure' do
+> 		#TODO
+> 	end
+> 
+> 	it 'Unique SMARTS matches against a SMILES string' do
+> 		output = wiki_code_capture_stdout do
+>       require 'rubabel'
+> 			mol = Rubabel["C1CC12C3(C24CC4)CC3"]
+> 			smarts = Rubabel::Smarts.new("*1**1")
+> 	 		smarts.ob.match(mol.ob)
+> 			a = smarts.ob.get_map_list.to_a
+> 			puts a.size
+> 			puts a.map{|i| i.sort}.uniq.size
+>     end
+>     output.should == "24\n4\n"
+> 	end
+> 
+> 	it 'Calculate TPSA' do
+> 		output = wiki_code_capture_stdout do
+>       require 'rubabel'
+> 			def TPSA(patterns, mol)
+> 				sum = 0.0
+> 				patterns.each do |pat| 
+> 					pat[1].ob.match(mol.ob)
+> 					sum += pat[1].ob.get_map_list.to_a.size * pat[0]
+> 				end
+> 				return sum
+> 			end
+> 
+> 			patterns = []
+> 			ignored_headers = false
+> 			IO.foreach("tpsa.tab") do |line| 
+> 				if ignored_headers
+> 					parts = line.chop.split("\t")
+> 					patterns << [parts[0].to_f, Rubabel::Smarts.new(parts[1])]
+> 				end
+> 				ignored_headers = true
+> 			end
+> 			puts TPSA(patterns, Rubabel["CN2C(=O)N(C)C(=O)C1=C2N=CN1C"])
+> 		end
+> 		output.should == "61.82\n"
+> 	end
+> 	
+> 	it 'Find the graph diameter' do
+> 		output = wiki_code_capture_stdout do
+>       require 'rubabel'
+> 			puts Rubabel["CC(C)C(C(=O)NC(=O)C1CCCN1C(=O)C(C)NC(=O)C(C)NC(=O)CCC(=O)OC)NC2=CC=C(C=C2)[N+](=O)[O-]"].graph_diameter
+> 		end
+> 		output.should == "24\n"
+> 	end
+> 
+> 	it 'Break rotatable bonds and report the fragments' do
+> 		output = wiki_code_capture_stdout do
+> 			pattern = Rubabel::Smarts.new("[!$([NH]!@C(=O))&!D1&!$(*#*)]-&!@[!$([NH]!@C(=O))&!D1&!$(*#*)]")
+> 			mol = Rubabel["c1ccc2c(c1)C(=NC(C(=O)N2CC(=O)O)Cc3ccc(cc3)O)c4cccc(c4)O"]
+> 			mol.matches(pattern).each do |atom1, atom2|
+>   		  mol.delete_bond(atom1.get_bond(atom2))
+> 		    [atom1, atom2].each do |old_a|
+> 			    new_a = Rubabel::Atom.new(mol.add_atom(0))
+> 			    mol.add_bond(old_a, new_a, 1)
+> 		    end
+> 			end
+> 			puts "#{mol.to_s.gsub('.',"\n")}"
+> 		end
+> 		output.should == "*C*\n*C*\n*C(=O)O\nO=C1C(*)N=C(c2c(N1*)cccc2)*\n*c1cccc(c1)O\n*c1ccc(cc1)O\n"
+> 	end
+> 
+> 	xit 'Perform a substructure search on SDF file and report the number of false positives' do
+> 		output = wiki_code_capture_stdout do
+>       require 'rubabel'
+> 			smart = Rubabel::Smarts.new("C1C=C(NC=O)C=CC=1")
+> 			sm_mol = Rubabel[smart.to_s]
+> 			count = 0
+> 			Rubabel.foreach("benzodiazepine.sdf.gz").map do |mol|
+> 				count += 1 if sm_mol.to_s == mol.ob_fingerprint.to_s
+> 			end
+> 			#aromatize should be automatic for converstion from smarts??
+> 			#fingerprint search
+> 			#bitTest/full substructure match
+> 		puts count
+> #		puts "#{mols.size} total\n#{num_true_matches} matches\n#{num_matches - num_true_matches}"
+>     end
+215a297,303
+> #   output.should == "12386 total\n8836 matches\n1 false positives\n"
+>     output.should == ""
+> 	end
+> 
+> 	xit 'Change stereochemistry of certain atoms in SMILES file' do
+> 		#TODO
+> 	end

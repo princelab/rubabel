@@ -41,26 +41,8 @@ module Rubabel
       def from_string(string, type=DEFAULT_IN_TYPE)
         Rubabel.molecule_from_string(string, type)
       end
-
-      def from_atoms_and_bonds(atoms=[], bonds=[])
-        obj = self.new( OpenBabel::OBMol.new )
-        atoms.each {|atom| obj.add_atom(atom) }
-        bonds.each {|bond| obj.add_bond(bond) }
-        obj
-      end
     end
 
-    def add_atom(atom)
-      # jtp implementation:
-      #@ob.add_atom(atom.ob)
-      new_a = @ob.new_atom()
-		  new_a.set_atomic_num(atom_num)
-		  new_a
-    end
-
-    def delete_atom(atom)
-      @ob.delete_atom(atom.ob, false)
-    end
 
     # attributes
     def title() @ob.get_title end
@@ -87,8 +69,8 @@ module Rubabel
 
 
     def initialize(obmol, obconv=nil)
-      @ob = obmol
       @obconv = obconv
+      @ob = obmol
     end
 
     # returns a list of atom indices matching the patterns (corresponds to
@@ -269,7 +251,7 @@ module Rubabel
     #end
 
     def tanimoto(other, type=DEFAULT_FINGERPRINT)
-      other.nil? ? 0 : Rubabel::Molecule.tanimoto(self, other, type)
+			other.nil? ? 0 : Rubabel::Molecule.tanimoto(self, other, type)
     end
 
     # returns a  std::vector<unsigned int> that can be passed directly into
@@ -285,43 +267,20 @@ module Rubabel
     def delete(obj)
       case obj
       when Rubabel::Bond
-        delete_bond(obj, false)
+        delete_bond(obj)
       when Rubabel::Atom
-        delete_atom(obj, false)
+        delete_atom(obj)
       else 
         raise(ArgumentError, "don't know how to delete objects of type: #{obj.class}")
       end
     end
 
     def delete_bond(bond)
-      @ob.delete_bond(bond.ob, false)
+      @ob.delete_bond(bond.ob)
     end
 
     def delete_atom(atom)
-      @ob.delete_atom(atom.ob, false)
-    end
-
-    # swaps to_move1 for to_move2 on the respective anchors
-    # returns self
-    def swap!(anchor1, to_move1, anchor2, to_move2)
-      OpenBabel::OBBuilder.swap(@ob, *[anchor1, to_move1, anchor2, to_move2].map {|at| at.ob.get_idx } )
-      self
-    end
-
-    # takes a Rubabel::Bond object or a pair of Rubabel::Atom objects
-    def add_bond(*args)
-      case args.size
-      when 1
-        ob_bond = args.first.ob
-        @ob.add_bond(ob_bond)
-        ob_bond.get_begin_atom.add_bond(ob_bond)
-        ob_bond.get_end_atom.add_bond(ob_bond)
-      when 2
-        ob_bond = Rubabel::Bond[ *args ].ob
-        ob_bond.get_begin_atom.add_bond(ob_bond)
-        ob_bond.get_end_atom.add_bond(ob_bond)
-        @ob.add_bond(ob_bond)
-      end
+      @ob.delete_atom(atom.ob)
     end
 
     # yields self after deleting the specified bonds.  When the block is
@@ -338,8 +297,6 @@ module Rubabel
       reply
     end
 
-    # splits the molecules at the given bonds and returns the fragments.  Does
-    # not alter the caller.
     def split(*bonds)
       delete_and_restore_bonds(*bonds) do |mol|
         mol.ob.separate.map(&:upcast)
@@ -434,43 +391,52 @@ module Rubabel
       "#<Mol #{to_s}>"
     end
 
-    #options are:
-    #  :title, the molecule title displayed on the image, default blank
-    #	 :format, the file format (png, svg), default svg
-    #	 :size, the x and y size (must be square), default 300
-    #  :filename, the name of the output file, default mol
-    def draw(opts)
-      self.title = (opts[:title]==nil ? "" : opts[:title])
-      self.obconv.set_in_and_out_formats('smi','svg')
-      self.obconv.add_option("P",OpenBabel::OBConversion::OUTOPTIONS, "#{opts[:format]==nil ? '300' : opts[:format]}") #sets image size to 300X300
-      self.obconv.write_file(self.ob, "#{opts[:filename]==nil ? "mol.svg" : opts[:filename]}")
-    end
+		def add_atom (atom_num)
+		  new_a = @ob.new_atom()
+		  new_a.set_atomic_num(atom_num)
+		  return new_a
+		end
 
-    def highlight_substructure!(substructure)
-      conv = OpenBabel::OBConversion.new
-      conv.set_in_and_out_formats('smi','svg')
-      conv.add_option("s",OpenBabel::OBConversion::GENOPTIONS, "#{substructure} red")
-      conv.add_option("d",OpenBabel::OBConversion::GENOPTIONS) 	
+		def add_bond(atom1, atom2, order)
+	    @ob.add_bond(atom1.idx,atom2.idx,order)
+		end
+
+		#options are:
+		#  :title, the molecule title displayed on the image, default blank
+		#	 :format, the file format (png, svg), default svg
+		#	 :size, the x and y size (must be square), default 300
+		#  :filename, the name of the output file, default mol
+		def draw(opts)
+			self.title = (opts[:title]==nil ? "" : opts[:title])
+			self.obconv.set_in_and_out_formats('smi','svg')
+			self.obconv.add_option("P",OpenBabel::OBConversion::OUTOPTIONS, "#{opts[:format]==nil ? '300' : opts[:format]}") #sets image size to 300X300
+			self.obconv.write_file(self.ob, "#{opts[:filename]==nil ? "mol.svg" : opts[:filename]}")
+		end
+
+		def highlight_substructure!(substructure)
+			conv = OpenBabel::OBConversion.new
+			conv.set_in_and_out_formats('smi','svg')
+			conv.add_option("s",OpenBabel::OBConversion::GENOPTIONS, "#{substructure} red")
+			conv.add_option("d",OpenBabel::OBConversion::GENOPTIONS) 	
 
 
-      self.obconv.set_in_and_out_formats('smi','svg')
-      self.obconv.add_option("u",OpenBabel::OBConversion::OUTOPTIONS)
-      self.ob.do_transformations(conv.get_options(OpenBabel::OBConversion::GENOPTIONS), conv)
-      #obabel benzodiazepine.sdf.gz -O out.svg --filter "title=3016" -s "c1ccc2c(c1)C(=NCCN2)c3ccccc3 red" -xu -d
-      self
-    end
+			self.obconv.set_in_and_out_formats('smi','svg')
+			self.obconv.add_option("u",OpenBabel::OBConversion::OUTOPTIONS)
+			self.ob.do_transformations(conv.get_options(OpenBabel::OBConversion::GENOPTIONS), conv)
+			#obabel benzodiazepine.sdf.gz -O out.svg --filter "title=3016" -s "c1ccc2c(c1)C(=NCCN2)c3ccccc3 red" -xu -d
+			self
+		end
 
-    def graph_diameter
-      distance_matrix = Array.new
-      self.atoms.each do |a|
-        iter = OpenBabel::OBMolAtomBFSIter.new(self.ob, a.idx)
-        while iter.inc.deref do
-          distance_matrix << iter.current_depth - 1
-        end
-      end
-      return distance_matrix.max
-    end
-
+		def graph_diameter
+			distance_matrix = Array.new
+			self.atoms.each do |a|
+	    	iter = OpenBabel::OBMolAtomBFSIter.new(self.ob, a.idx)
+				while iter.inc.deref do
+					distance_matrix << iter.current_depth - 1
+				end
+			end
+			return distance_matrix.max
+		end
   end
 end
 
