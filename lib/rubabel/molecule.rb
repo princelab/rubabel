@@ -22,6 +22,10 @@ module Rubabel
     DEFAULT_OUT_TYPE = :can
     DEFAULT_IN_TYPE = :smi
 
+
+    #DEFAULT_DRAW_OPTS = {
+    #}
+
     # the OpenBabel::OBmol object
     attr_accessor :ob
 

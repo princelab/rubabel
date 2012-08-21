@@ -34,7 +34,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     Dir.chdir(@orig_dir)
   end
 
-  it 'gets Heavy atom counts from an SD file' do
+  specify 'Heavy atom counts from an SD file' do
     #http://ctr.wikia.com/wiki/Heavy_atom_counts_from_an_SD_file
     output = wiki_code_capture_stdout do
       require 'rubabel'
@@ -43,7 +43,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     output.should == IO.read( @keydir + "/" + "benzodiazepine_heavy_atom_counts.output.10.txt" )
   end
 
-  it 'gets Ring counts in a SMILES file' do
+  specify 'Ring counts in a SMILES file' do
     # http://ctr.wikia.com/wiki/Ring_counts_in_a_SMILES_file
     output = wiki_code_capture_stdout do
       require 'rubabel'
@@ -52,7 +52,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     output.should == IO.read( @keydir + '/' + "benzodiazepine_ring_counts.output.10.txt" )
   end
 
-  it 'Converts a SMILES string to canonical SMILES' do
+  specify 'Convert a SMILES string to canonical SMILES' do
     # http://ctr.wikia.com/wiki/Convert_a_SMILES_string_to_canonical_SMILES
     wiki_code do
       require 'rubabel'
@@ -62,7 +62,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     end
   end
 
-  it 'Works with SD tag data' do
+  specify 'Working with SD tag data' do
     # http://ctr.wikia.com/wiki/Working_with_SD_tag_data
     wiki_code do
       require 'rubabel'
@@ -94,7 +94,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     unlink "RULE5.sdf"
   end
 
-  it 'Detects and reports SMILES and SDF parsing errors' do
+  specify 'Detect and report SMILES and SDF parsing errors' do
     # http://ctr.wikia.com/wiki/Detect_and_report_SMILES_and_SDF_parsing_errors
     wiki_code do
       require 'rubabel'
@@ -114,7 +114,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     unlink("log.txt")
   end
 
-  it 'Reports how many SD file records are within a certain molecular weight range' do
+  specify 'Report how many SD file records are within a certain molecular weight range' do
     # http://ctr.wikia.com/wiki/Report_how_many_SD_file_records_are_within_a_certain_molecular_weight_range
     output = wiki_code_capture_stdout do
       require 'rubabel'
@@ -124,7 +124,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     # checked with large file and it came out to 3916, which is correct
   end
 
-  it 'Converts SMILES file to SD file' do
+  specify 'Convert SMILES file to SD file' do
     # http://ctr.wikia.com/wiki/Convert_SMILES_file_to_SD_file
     wiki_code do
       require 'rubabel'
@@ -143,21 +143,48 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     unlink "benzodiazepine.smi.sdf"
   end
 
-  it 'Reports the similarity between two structures' do
+  specify 'Report the similarity between two structures' do
     # http://ctr.wikia.com/wiki/Report_the_similarity_between_two_structures
     output = wiki_code_capture_stdout do
       require 'rubabel'
-      (mol1, mol2) = %w{CC(C)C=CCCCCC(=O)NCc1ccc(c(c1)OC)O COC1=C(C=CC(=C1)C=O)O}.map do |smile| 
-        Rubabel[smile]
-      end
+      (mol1, mol2) = %w{CC(C)C=CCCCCC(=O)NCc1ccc(c(c1)OC)O COC1=C(C=CC(=C1)C=O)O}.map{|smile| Rubabel[smile]}
       puts mol1.tanimoto(mol2)
     end
     output.should == "0.36046511627906974\n"
     # notes: reports similarity of 0.36046511627906974
   end
 
-  it 'Finds the 10 nearest neighbors in a data set' do
+  specify 'Find the 10 nearest neighbors in a data set' do
     # http://ctr.wikia.com/wiki/Find_the_10_nearest_neighbors_in_a_data_set
+
+    output = wiki_code_capture_stdout do
+      require 'rubabel'
+
+      prev = nil
+      comp = []
+      Rubabel.foreach("benzodiazepine.sdf.gz").map do |mol|
+        prev = mol if prev.nil?
+        comp << [prev.tanimoto(mol), mol.title]
+      end
+      puts comp.sort.reverse[1,11].map {|v| "#{v[0].round(3)} #{v[1]}" }
+    end
+    output.should == "0.979 3016\n0.979 2997\n0.909 3369\n0.874 2809\n0.769 3299\n0.74 2802\n0.379 3261\n0.377 2118\n0.368 1963\n"
+    # output when run on entire benzodiazepine.sdf.gz:
+    #1.0 450820
+    #1.0 1688
+    #0.993 20351792
+    #0.986 9862446
+    #0.979 398658
+    #0.979 398657
+    #0.979 6452650
+    #0.979 450830
+    #0.979 44353759
+    #0.979 3016
+    #0.979 2997
+  end
+
+# jtp original implementation
+=begin
     output = wiki_code_capture_stdout do
       require 'rubabel'
       fp1 = nil
@@ -194,17 +221,22 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     #end
     #puts comparisons.sort.reverse.map {|pair| pair.join(" ") }
   end
+=end
 
-  xit 'Depicts a compound as an image' do
+  specify 'Depict a compound as an image' do
     # http://ctr.wikia.com/wiki/Depict_a_compound_as_an_image
     wiki_code do
-      # still need to work on this!
-      #require 'rubabel'
+      require 'rubabel'
+      mol = Rubabel["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"]
+      mol.draw(opts = {:title=>"Caffiene", :size => 300})
+
       #Rubabel["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"].write_file("caffeine.svg")
     end
+    #OR, using commandline
+		#%x{obabel -:"CN1C=NC2=C1C(=O)N(C(=O)N2C)C" -O "mol.png" -xP 300}
   end
 
-  xit 'Highlight a substructure in the depiction' do
+  xspecify 'Highlight a substructure in the depiction' do
     smarts = "c1ccc2c(c1)C(=NCCN2)c3ccccc3"
     mol = Rubabel.foreach("benzodiazepine.sdf.gz").find {|mol| mol.title == "3016" }
     p OpenBabel::OBConversion.constants
