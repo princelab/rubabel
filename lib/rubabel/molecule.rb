@@ -448,15 +448,28 @@ module Rubabel
     #     :size, the x and y size (must be square), default 300
     #     :filename, the name of the output file, default mol
     def draw(opts={})
+      raise NotImplementedError, "needs more work for correct png output and sizing"
+
+      # things JTP is playing with:
+=begin
       opts = DEFAULT_DRAW_OPTS.merge( opts )
       self.title = opts[:title] if opts[:title]
-      self.obconv.set_out_format(opts[:format])
-      self.obconv.add_option("P",OpenBabel::OBConversion::OUTOPTIONS, opts[:size].to_s) #sets image size to 300X300
+      self.obconv.set_out_format(opts[:format].to_s)
+      p OpenBabel::OBConversion::OUTOPTIONS
+      p OpenBabel::OBConversion::OUTOPTIONS.class
+      p self.obconv.get_options(OpenBabel::OBConversion::OUTOPTIONS).methods - Object.new.methods
+      abort 'here'
+      p self.obconv.get_options(OpenBabel::OBConversion::GENOPTIONS)
+      self.obconv.add_option("P", OpenBabel::OBConversion::OUTOPTIONS, opts[:size].to_s) #sets image size to 300X300
+      p self.obconv.get_options(OpenBabel::OBConversion::OUTOPTIONS)
+      p self.obconv.get_options(OpenBabel::OBConversion::GENOPTIONS)
+      p OpenBabel::OBConversion::OUTOPTIONS
+      p OpenBabel::OBConversion::OUTOPTIONS.class
       #self.obconv.add_option("gen2D",OpenBabel::OBConversion::GENOPTIONS)
-      self.obconv.add_option("h",OpenBabel::OBConversion::GENOPTIONS)
-      self.ob.do_transformations(self.obconv.get_options(OpenBabel::OBConversion::GENOPTIONS), self.obconv)
+      #self.obconv.add_option("h",OpenBabel::OBConversion::GENOPTIONS)
+      #self.ob.do_transformations(self.obconv.get_options(OpenBabel::OBConversion::GENOPTIONS), self.obconv)
       self.obconv.write_file(self.ob, opts[:filename])
-
+=end
 
       #opts = DEFAULT_DRAW_OPTS.merge( opts )
       #self.title = opts[:title] if opts[:title]
@@ -467,17 +480,23 @@ module Rubabel
       #self.obconv.write_file(self.ob, opts[:filename])
     end
 
+    # takes commandline option pairs.  A boolean indicates a flag.
+    # do_transformations are run on the molecule.  Returns self.
+    #
+    #     transform!( s: "co red", d: true )
+    def transform!(opts)
+    end
+
+    # returns self
     def highlight_substructure!(substructure)
-      conv = OpenBabel::OBConversion.new
-      conv.set_in_and_out_formats('smi','svg')
-      conv.add_option("s",OpenBabel::OBConversion::GENOPTIONS, "#{substructure} red")
-      conv.add_option("d",OpenBabel::OBConversion::GENOPTIONS) 	
-
-
-      self.obconv.set_in_and_out_formats('smi','svg')
-      self.obconv.add_option("u",OpenBabel::OBConversion::OUTOPTIONS)
-      self.ob.do_transformations(conv.get_options(OpenBabel::OBConversion::GENOPTIONS), conv)
       #obabel benzodiazepine.sdf.gz -O out.svg --filter "title=3016" -s "c1ccc2c(c1)C(=NCCN2)c3ccccc3 red" -xu -d
+      obconv.set_out_format('svg')
+
+      obconv.add_option("s",OpenBabel::OBConversion::GENOPTIONS, "#{substructure} red")
+      obconv.add_option("d",OpenBabel::OBConversion::GENOPTIONS) 	
+      self.ob.do_transformations(obconv.get_options(OpenBabel::OBConversion::GENOPTIONS), obconv)
+
+      obconv.add_option("u",OpenBabel::OBConversion::OUTOPTIONS)
       self
     end
 
@@ -489,7 +508,7 @@ module Rubabel
           distance_matrix << iter.current_depth - 1
         end
       end
-      return distance_matrix.max
+      distance_matrix.max
     end
 
   end

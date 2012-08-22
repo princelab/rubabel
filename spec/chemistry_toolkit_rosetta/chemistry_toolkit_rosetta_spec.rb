@@ -223,13 +223,14 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
   end
 =end
 
-  specify 'Depict a compound as an image' do
+  xspecify 'Depict a compound as an image' do
     # http://ctr.wikia.com/wiki/Depict_a_compound_as_an_image
     wiki_code do
       require 'rubabel'
       mol = Rubabel["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"]
-      mol.draw(:title=>"Caffeine", :size => 900)
-      mol.draw(:title=>"Caffeine", :size => 300, format: 'png', filename: 'mol.png')
+      mol.draw(title: "Caffeine", size: 900, format: :png, filename: 'caffeine.png')
+      mol.draw  # should produce mol.svg according to defaults
+      mol.draw(title: "Caffeine", size: 900, filename: 'caffeine.svg') # default format svg
 
       #Rubabel["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"].write_file("caffeine.svg")
     end
@@ -237,13 +238,23 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
 		#%x{obabel -:"CN1C=NC2=C1C(=O)N(C(=O)N2C)C" -O "mol.png" -xP 300}
   end
 
-  xspecify 'Highlight a substructure in the depiction' do
-    smarts = "c1ccc2c(c1)C(=NCCN2)c3ccccc3"
-    mol = Rubabel.foreach("benzodiazepine.sdf.gz").find {|mol| mol.title == "3016" }
-    p OpenBabel::OBConversion.constants
-    p mol.obconv.get_options(OpenBabel::OBConversion.(:ALL))
-    #mol.write("hello.svg")
+  specify 'Highlight a substructure in the depiction' do
+    # http://ctr.wikia.com/wiki/Highlight_a_substructure_in_the_depiction
+
+    # when we fix the draw function, this should work like a charm!
+    wiki_code do
+      require 'rubabel'
+      mol = Rubabel.foreach("benzodiazepine.sdf.gz").find {|mol| mol.title == "3016" }
+      mol.highlight_substructure!("c1ccc2c(c1)C(=NCCN2)c3ccccc3")
+      # this guy needs to be png 200x250 px
+      mol.write("just_confirming_substructure_for_now.svg")
+    end
   end
+
+
+
+
+
 
 
 end
