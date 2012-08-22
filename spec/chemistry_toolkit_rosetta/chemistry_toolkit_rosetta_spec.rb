@@ -228,7 +228,8 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     wiki_code do
       require 'rubabel'
       mol = Rubabel["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"]
-      mol.draw(opts = {:title=>"Caffiene", :size => 300})
+      mol.draw(:title=>"Caffeine", :size => 900)
+      mol.draw(:title=>"Caffeine", :size => 300, format: 'png', filename: 'mol.png')
 
       #Rubabel["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"].write_file("caffeine.svg")
     end

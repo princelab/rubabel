@@ -22,9 +22,12 @@ module Rubabel
     DEFAULT_OUT_TYPE = :can
     DEFAULT_IN_TYPE = :smi
 
-
-    #DEFAULT_DRAW_OPTS = {
-    #}
+    DEFAULT_DRAW_OPTS = {
+      filename: 'mol',
+      format: 'svg',
+      size: 300,
+      title: nil,
+    }
 
     # the OpenBabel::OBmol object
     attr_accessor :ob
@@ -438,16 +441,30 @@ module Rubabel
       "#<Mol #{to_s}>"
     end
 
-    #options are:
-    #  :title, the molecule title displayed on the image, default blank
-    #	 :format, the file format (png, svg), default svg
-    #	 :size, the x and y size (must be square), default 300
-    #  :filename, the name of the output file, default mol
-    def draw(opts)
-      self.title = (opts[:title]==nil ? "" : opts[:title])
-      self.obconv.set_in_and_out_formats('smi','svg')
-      self.obconv.add_option("P",OpenBabel::OBConversion::OUTOPTIONS, "#{opts[:format]==nil ? '300' : opts[:format]}") #sets image size to 300X300
-      self.obconv.write_file(self.ob, "#{opts[:filename]==nil ? "mol.svg" : opts[:filename]}")
+    # opts:
+    #
+    #     :title, the molecule title displayed on the image, default blank
+    #     :format, the file format (svg, png), default svg
+    #     :size, the x and y size (must be square), default 300
+    #     :filename, the name of the output file, default mol
+    def draw(opts={})
+      opts = DEFAULT_DRAW_OPTS.merge( opts )
+      self.title = opts[:title] if opts[:title]
+      self.obconv.set_out_format(opts[:format])
+      self.obconv.add_option("P",OpenBabel::OBConversion::OUTOPTIONS, opts[:size].to_s) #sets image size to 300X300
+      #self.obconv.add_option("gen2D",OpenBabel::OBConversion::GENOPTIONS)
+      self.obconv.add_option("h",OpenBabel::OBConversion::GENOPTIONS)
+      self.ob.do_transformations(self.obconv.get_options(OpenBabel::OBConversion::GENOPTIONS), self.obconv)
+      self.obconv.write_file(self.ob, opts[:filename])
+
+
+      #opts = DEFAULT_DRAW_OPTS.merge( opts )
+      #self.title = opts[:title] if opts[:title]
+      ##self.title = (opts[:title]==nil ? "" : opts[:title])
+      #self.obconv.set_in_and_out_formats('smi',opts[:format])
+      #self.obconv.add_option("P",OpenBabel::OBConversion::OUTOPTIONS, opts[:size].to_s) #sets image size to 300X300
+      #self.obconv.do_transformations(self.obconv
+      #self.obconv.write_file(self.ob, opts[:filename])
     end
 
     def highlight_substructure!(substructure)
