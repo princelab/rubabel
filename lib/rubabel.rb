@@ -66,7 +66,7 @@ module Rubabel
       (obmol, obconv, not_at_end) = read_first_obmol(filename, type)
       # the obmol is not valid if we are already at the end!
       while not_at_end
-        block.call Rubabel::Molecule.new(obmol, obconv)
+        block.call Rubabel::Molecule.new(obmol)
         obmol = OpenBabel::OBMol.new
         not_at_end = obconv.read(obmol)
       end
@@ -77,19 +77,14 @@ module Rubabel
     # determines the type from the extension if type is nil.
     def molecule_from_file(filename, type=nil)
       (obmol, obconv, not_at_end) = read_first_obmol(filename, type).first
-      Rubabel::Molecule.new(obmol, obconv)
+      Rubabel::Molecule.new(obmol)
     end
 
     # reads one molecule from the string
-    def molecule_from_string(string, type=:smi)
-      obmol = OpenBabel::OBMol.new
-      obconv = OpenBabel::OBConversion.new
-      obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
-      obconv.read_string(obmol, string) || raise(ArgumentError, "invalid string" )
-      Rubabel::Molecule.new(obmol, obconv)
+    def molecule_from_string(string, type=Rubabel::Molecule::DEFAULT_IN_TYPE)
+      Rubabel::Molecule.from_string(string, type)
     end
 
-    private
     # reads the first entry and returns the OBMol object, the OBConversion object,
     # and the boolean not_at_end.  This method is not intended for public usage
     # but is necessary based on discrepancies between accessing the first

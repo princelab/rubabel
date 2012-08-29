@@ -3,6 +3,8 @@ require 'rubabel'
 require 'rubabel/atom'
 require 'rubabel/bond'
 require 'rubabel/molecule/fragmentable'
+require 'stringio'
+require 'mini_magick'
 
 class OpenBabel::OBMol
   def upcast
@@ -10,8 +12,22 @@ class OpenBabel::OBMol
   end
 end
 
-class OpenBable::OBConversion
+class OpenBabel::OBConversion
   OUT_OPTS_SHORT = {
+    no_element_coloring: :u,
+    no_internal_specified_color: :U,
+    black_bkg: :b,
+    no_terminal_c: :C,
+    draw_all_carbon: :a,
+    no_molecule_name: :d,
+    embed_mol_as_cml: :e,
+    scale_to_bondlength_pixels: :p,
+    size: :P, # single number of pixels (e.g., 300, but will take dims for png: ('300x250'))
+    add_atom_index: :i,
+    no_javascript: :j,
+    wedge_hash_bonds: :w,
+    no_xml_declaration: :x,
+    aliases: :A,
   }
 
   # adds the opts to the type, where type is :gen, :out, or :in.
@@ -24,7 +40,7 @@ class OpenBable::OBConversion
   #     obconv.add_opts!(:out, :d, :u, [:p, 10] )
   #
   # returns self
-  def add_opts!(type=:gen, opts)
+  def add_opts!(type=:gen, *opts)
     opt_type = OpenBabel::OBConversion.const_get(type.to_s.upcase.<<("OPTIONS"))
     hash = 
       if opts.first.is_a?(Hash)
@@ -40,8 +56,11 @@ class OpenBable::OBConversion
         end
       end
     hash.each do |k,v|
+      next if v == false
       args = [ (OUT_OPTS_SHORT[k] || k).to_s, opt_type ]
-      args << v if v
+      if v && (v != true)
+        args << v
+      end
       self.add_option(*args)
     end
     self
@@ -52,7 +71,6 @@ class OpenBabelUnableToSetupForceFieldError < RuntimeError
 end
 
 module Rubabel
-    # yet to implement: 
   class Molecule
     include Enumerable
 
@@ -60,20 +78,8 @@ module Rubabel
     DEFAULT_OUT_TYPE = :can
     DEFAULT_IN_TYPE = :smi
 
-    DEFAULT_DRAW_OPTS = {
-      filename: 'mol',
-      format: 'svg',
-      size: 300,
-      title: nil,
-    }
-
-
-
     # the OpenBabel::OBmol object
     attr_accessor :ob
-
-    # the OpenBabel::OBConversion object
-    attr_accessor :obconv
 
     class << self
 
@@ -82,11 +88,16 @@ module Rubabel
       end
 
       def from_file(file, type=nil)
-        Rubabel.molecule_from_file(file, type)
+        (obmol, obconv, not_at_end) = Rubabel.read_first_obmol(file, type).first
+        Rubabel::Molecule.new(obmol)
       end
 
       def from_string(string, type=DEFAULT_IN_TYPE)
-        Rubabel.molecule_from_string(string, type)
+        obmol = OpenBabel::OBMol.new
+        obconv = OpenBabel::OBConversion.new
+        obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
+        obconv.read_string(obmol, string) || raise(ArgumentError, "invalid string" )
+        self.new(obmol)
       end
 
       def from_atoms_and_bonds(atoms=[], bonds=[])
@@ -101,8 +112,8 @@ module Rubabel
       # jtp implementation:
       #@ob.add_atom(atom.ob)
       new_a = @ob.new_atom()
-		  new_a.set_atomic_num(atom_num)
-		  new_a
+      new_a.set_atomic_num(atom_num)
+      new_a
     end
 
     def delete_atom(atom)
@@ -133,9 +144,8 @@ module Rubabel
     def formula() @ob.get_formula end
 
 
-    def initialize(obmol, obconv=nil)
+    def initialize(obmol)
       @ob = obmol
-      @obconv = obconv
     end
 
     # returns a list of atom indices matching the patterns (corresponds to
@@ -174,11 +184,11 @@ module Rubabel
     end
 
     #def conformers
-      # Currently returns an object of type
-      # SWIG::TYPE_p_std__vectorT_double_p_std__allocatorT_double_p_t_t
-      #vec = @ob.get_conformers
+    # Currently returns an object of type
+    # SWIG::TYPE_p_std__vectorT_double_p_std__allocatorT_double_p_t_t
+    #vec = @ob.get_conformers
     #end
-    
+
     # are there hydrogens added yet
     def hydrogens_added?
       @ob.has_hydrogens_added
@@ -227,13 +237,13 @@ module Rubabel
     #  # creates a new molecule (currently writes to smiles and uses babel
     #  # commandline to get hydrogens at a given pH; this is because no pH model
     #  # in ruby bindings currently).
-#
-#      ## write the file with the molecule
-#      #self.write_file("tmp.smi")
-#      #system "#{Rubabel::CMD[:babel]} -i smi tmp.smi -p #{ph} -o can tmp.can"
-#      #Molecule.from_file("tmp.can")
-#    end
-#    #alias_method :add_h!, :add_hydrogens!
+    #
+    #      ## write the file with the molecule
+    #      #self.write_file("tmp.smi")
+    #      #system "#{Rubabel::CMD[:babel]} -i smi tmp.smi -p #{ph} -o can tmp.can"
+    #      #Molecule.from_file("tmp.can")
+    #    end
+    #    #alias_method :add_h!, :add_hydrogens!
 
     # returns self
     def remove_h!
@@ -292,7 +302,6 @@ module Rubabel
     def initialize_copy(source)
       super
       @ob = OpenBabel::OBMol.new(source.ob)
-      @obconv = OpenBabel::OBConversion.new(source.obconv)
       self
     end
 
@@ -470,15 +479,50 @@ module Rubabel
     end
     alias_method :make3d!, :make_3d!
 
+    # yields the type of object.  Expects the block to yield the image string.
+    def png_transformer(type_s, out_options={}, &block)
+      orig_out_options = out_options[:size]
+      if type_s == 'png'
+        png_output = true
+        type_s = 'svg'
+        if out_options[:size]
+          unless out_options[:size].to_s =~ /x/i
+            out_options[:size] = out_options[:size].to_s + 'x' + out_options[:size].to_s
+          end
+        end
+      else
+        if out_options[:size].is_a?(String) && (out_options[:size] =~ /x/i)
+          warn 'can only use the width dimension for this format'
+          out_options[:size] = out_options[:size].split(/x/i).first
+        end
+      end
+      image_blob = block.call(type_s, out_options)
+      if png_output
+        st = StringIO.new
+        image = MiniMagick::Image.read(image_blob, 'svg')
+        image.format('png')
+        # would like to resize as an svg, then output the png of proper
+        # granularity...
+        image.resize(out_options[:size]) if out_options[:size]
+        image_blob = image.write(st).string
+      end
+      out_options[:size] = orig_out_options
+      image_blob
+    end
+
+    # out_options include any of those defined 
     def write_string(type=DEFAULT_OUT_TYPE, out_options={})
-      @obconv ||= OpenBabel::OBConversion.new
-      @obconv.set_out_format(type.to_s)
-      @obconv.add_opts!(:out, out_options)
-      @obconv.write_string(@ob)
+      png_transformer(type.to_s, out_options) do |type_s, _out_opts|
+        obconv = out_options[:obconv] || OpenBabel::OBConversion.new
+        obconv.set_out_format(type_s)
+        obconv.add_opts!(:out, _out_opts)
+        obconv.write_string(@ob)
+      end
     end
 
     # writes to the file based on the extension given.  If type is given
-    # explicitly, then it is used.
+    # explicitly, then it is used.  If png is the extension or format, the
+    # png is generated from an svg.
     def write_file(filename, out_options={})
       type = Rubabel.filetype(filename)
       File.write(filename, write_string(type, out_options))
@@ -488,46 +532,7 @@ module Rubabel
       "#<Mol #{to_s}>"
     end
 
-    # opts:
-    #
-    #     :title, the molecule title displayed on the image, default blank
-    #     :format, the file format (svg, png), default svg
-    #     :size, the x and y size (must be square), default 300
-    #     :filename, the name of the output file, default mol
-    def draw(opts={})
-      raise NotImplementedError, "needs more work for correct png output and sizing"
-
-      # things JTP is playing with:
-=begin
-      opts = DEFAULT_DRAW_OPTS.merge( opts )
-      self.title = opts[:title] if opts[:title]
-      self.obconv.set_out_format(opts[:format].to_s)
-      p OpenBabel::OBConversion::OUTOPTIONS
-      p OpenBabel::OBConversion::OUTOPTIONS.class
-      p self.obconv.get_options(OpenBabel::OBConversion::OUTOPTIONS).methods - Object.new.methods
-      abort 'here'
-      p self.obconv.get_options(OpenBabel::OBConversion::GENOPTIONS)
-      self.obconv.add_option("P", OpenBabel::OBConversion::OUTOPTIONS, opts[:size].to_s) #sets image size to 300X300
-      p self.obconv.get_options(OpenBabel::OBConversion::OUTOPTIONS)
-      p self.obconv.get_options(OpenBabel::OBConversion::GENOPTIONS)
-      p OpenBabel::OBConversion::OUTOPTIONS
-      p OpenBabel::OBConversion::OUTOPTIONS.class
-      #self.obconv.add_option("gen2D",OpenBabel::OBConversion::GENOPTIONS)
-      #self.obconv.add_option("h",OpenBabel::OBConversion::GENOPTIONS)
-      #self.ob.do_transformations(self.obconv.get_options(OpenBabel::OBConversion::GENOPTIONS), self.obconv)
-      self.obconv.write_file(self.ob, opts[:filename])
-=end
-
-      #opts = DEFAULT_DRAW_OPTS.merge( opts )
-      #self.title = opts[:title] if opts[:title]
-      ##self.title = (opts[:title]==nil ? "" : opts[:title])
-      #self.obconv.set_in_and_out_formats('smi',opts[:format])
-      #self.obconv.add_option("P",OpenBabel::OBConversion::OUTOPTIONS, opts[:size].to_s) #sets image size to 300X300
-      #self.obconv.do_transformations(self.obconv
-      #self.obconv.write_file(self.ob, opts[:filename])
-    end
-
-     # returns self
+    # returns self
     def convert_dative_bonds!
       @ob.convert_dative_bonds
       self
@@ -552,26 +557,26 @@ module Rubabel
       self
     end
 
-    # uses the molecule obconv unless given. returns self
-    def highlight_substructure_jtp!(substructure)
+    # returns self
+    def highlight_substructure!(substructure, color='red')
       tmpconv = OpenBabel::OBConversion.new
-      tmpconv.add_option("s",OpenBabel::OBConversion::GENOPTIONS, "#{substructure} red")
+      tmpconv.add_option("s",OpenBabel::OBConversion::GENOPTIONS, "#{substructure} #{color}")
       self.ob.do_transformations(tmpconv.get_options(OpenBabel::OBConversion::GENOPTIONS), tmpconv)
       self
     end
 
-    # returns self
-    def highlight_substructure!(substructure)
-      #obabel benzodiazepine.sdf.gz -O out.svg --filter "title=3016" -s "c1ccc2c(c1)C(=NCCN2)c3ccccc3 red" -xu -d
-      obconv.set_out_format('svg')
+    ## returns self
+    #def highlight_substructure!(substructure)
+    #  #obabel benzodiazepine.sdf.gz -O out.svg --filter "title=3016" -s "c1ccc2c(c1)C(=NCCN2)c3ccccc3 red" -xu -d
+    #  obconv.set_out_format('svg')
 
-      obconv.add_option("s",OpenBabel::OBConversion::GENOPTIONS, "#{substructure} red")
-      obconv.add_option("d",OpenBabel::OBConversion::GENOPTIONS) 	
-      self.ob.do_transformations(obconv.get_options(OpenBabel::OBConversion::GENOPTIONS), obconv)
+    #  obconv.add_option("s",OpenBabel::OBConversion::GENOPTIONS, "#{substructure} red")
+    #  obconv.add_option("d",OpenBabel::OBConversion::GENOPTIONS) 	
+    #  self.ob.do_transformations(obconv.get_options(OpenBabel::OBConversion::GENOPTIONS), obconv)
 
-      obconv.add_option("u",OpenBabel::OBConversion::OUTOPTIONS)
-      self
-    end
+    #  obconv.add_option("u",OpenBabel::OBConversion::OUTOPTIONS)
+    #  self
+    #end
 
     def graph_diameter
       distance_matrix = Array.new
@@ -672,3 +677,33 @@ TPSA    topological polar surface area
  l draw grid lines
 
 =end
+
+# things JTP is playing with:
+=begin
+      opts = DEFAULT_DRAW_OPTS.merge( opts )
+      self.title = opts[:title] if opts[:title]
+      self.obconv.set_out_format(opts[:format].to_s)
+      p OpenBabel::OBConversion::OUTOPTIONS
+      p OpenBabel::OBConversion::OUTOPTIONS.class
+      p self.obconv.get_options(OpenBabel::OBConversion::OUTOPTIONS).methods - Object.new.methods
+      abort 'here'
+      p self.obconv.get_options(OpenBabel::OBConversion::GENOPTIONS)
+      self.obconv.add_option("P", OpenBabel::OBConversion::OUTOPTIONS, opts[:size].to_s) #sets image size to 300X300
+      p self.obconv.get_options(OpenBabel::OBConversion::OUTOPTIONS)
+      p self.obconv.get_options(OpenBabel::OBConversion::GENOPTIONS)
+      p OpenBabel::OBConversion::OUTOPTIONS
+      p OpenBabel::OBConversion::OUTOPTIONS.class
+      #self.obconv.add_option("gen2D",OpenBabel::OBConversion::GENOPTIONS)
+      #self.obconv.add_option("h",OpenBabel::OBConversion::GENOPTIONS)
+      #self.ob.do_transformations(self.obconv.get_options(OpenBabel::OBConversion::GENOPTIONS), self.obconv)
+      self.obconv.write_file(self.ob, opts[:filename])
+=end
+
+#opts = DEFAULT_DRAW_OPTS.merge( opts )
+#self.title = opts[:title] if opts[:title]
+##self.title = (opts[:title]==nil ? "" : opts[:title])
+#self.obconv.set_in_and_out_formats('smi',opts[:format])
+#self.obconv.add_option("P",OpenBabel::OBConversion::OUTOPTIONS, opts[:size].to_s) #sets image size to 300X300
+#self.obconv.do_transformations(self.obconv
+#self.obconv.write_file(self.ob, opts[:filename])
+

@@ -10,6 +10,16 @@ describe Rubabel::Molecule do
     end
   end
 
+  describe 'png output' do
+    it 'creates a png image (corresponds to the svg)' do
+      mol = Rubabel["NCC(=O)O"]
+      #mol.write("mol1.svg", size: '300x200') 
+      #mol.write("mol1.png", size: '300x280')
+      mol.write("mol1.svg")
+      mol.write("mol1.png")
+    end
+  end
+
   before(:each) do
     @mol = Rubabel::Molecule.from_file( TESTFILES + '/cholesterol.sdf' )
   end
@@ -242,6 +252,13 @@ describe Rubabel::Molecule do
       ar = @mol.matches(smarts_pattern.reverse)
       ar.first.map(&:type).should == %w(Cac O.co2).reverse
     end
+
+  end
+
+
+
+
+  describe 'using output format options' do
 
   end
 end

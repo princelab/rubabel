@@ -245,9 +245,15 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     wiki_code do
       require 'rubabel'
       mol = Rubabel.foreach("benzodiazepine.sdf.gz").find {|mol| mol.title == "3016" }
-      mol.highlight_substructure_jtp!("c1ccc2c(c1)C(=NCCN2)c3ccccc3")
-      # this guy needs to be png 200x250 px
-      mol.write("just_confirming_substructure_for_now.svg")
+      mol.highlight_substructure!("c1ccc2c(c1)C(=NCCN2)c3ccccc3").remove_h!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # this guy needs to be png 200x250 px !!!!!!!!
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      mol.write("3016_highlighted.rubabel.png", u: true)
     end
   end
 
