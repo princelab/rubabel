@@ -8,11 +8,9 @@ describe Rubabel::Atom do
   it 'can be created given an element symbol' do
     hydrogen = Rubabel::Atom[:h]
     hydrogen.el.should == :h
-    hydrogen.id.should == 0
 
     carbon = Rubabel::Atom[:c]
     carbon.el.should == :c
-    carbon.id.should == 0
 
     chlorine = Rubabel::Atom[:cl, 3]
     chlorine.el.should == :cl

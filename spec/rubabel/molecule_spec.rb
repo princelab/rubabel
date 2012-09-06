@@ -17,6 +17,10 @@ describe Rubabel::Molecule do
       #mol.write("mol1.png", size: '300x280')
       mol.write("mol1.svg")
       mol.write("mol1.png")
+      %w(mol1.svg mol1.png).each do |file|
+        File.exist?(file).should be_true
+        File.unlink(file)
+      end
     end
   end
 
@@ -33,6 +37,24 @@ describe Rubabel::Molecule do
     it "has #{methd}" do
       @mol.send(methd).should == exp
     end
+  end
+
+  specify '#add_atom! adds an atom given an atomic number and returns it' do
+    mol = Rubabel["CCO"]
+    before_size = mol.atoms.size
+    atom = mol.add_atom!(6)
+    atom.el.should == :c
+    (mol.atoms.size - before_size).should == 1
+    mol.csmiles.should == "CCO.C"
+  end
+
+  specify '#add_atom! with a Rubabel::Atom'
+
+  specify '#add_bond! adds a bond (and updates atoms)' do
+    mol = Rubabel["CCO"]
+    atom = mol.add_atom!(0)
+    mol.add_bond!(mol.atoms[1], atom)
+    mol.csmiles.should == '*C(O)C'
   end
 
 #  specify '#add_bond adds a bond (and updates atoms)' do
@@ -254,9 +276,6 @@ describe Rubabel::Molecule do
     end
 
   end
-
-
-
 
   describe 'using output format options' do
 

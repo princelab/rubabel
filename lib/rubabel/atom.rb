@@ -14,11 +14,12 @@ module Rubabel
     include Enumerable
 
     class << self
-      # takes an element symbol and creates that atom
-      def [](el_sym=:h, id=0)
+      # takes an element symbol and creates that atom.  If el_sym is set to
+      # nil or 0, then an atom of atomic number 0 is used
+      def [](el_sym=:h, id=nil)
         ob_atom = OpenBabel::OBAtom.new
-        ob_atom.set_id(id)
-        ob_atom.set_atomic_num(Rubabel::EL_TO_NUM[el_sym])
+        ob_atom.set_id(id) if id
+        ob_atom.set_atomic_num(Rubabel::EL_TO_NUM[el_sym] || 0)
         self.new(ob_atom)
       end
     end

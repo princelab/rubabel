@@ -108,12 +108,13 @@ module Rubabel
       end
     end
 
-    def add_atom(atom)
+    # arg is an atomic number. returns the newly created atom
+    def add_atom!(atomic_num=1)
       # jtp implementation:
-      #@ob.add_atom(atom.ob)
-      new_a = @ob.new_atom()
-      new_a.set_atomic_num(atom_num)
-      new_a
+      # @ob.add_atom(atom.ob)
+      new_a = @ob.new_atom
+      new_a.set_atomic_num(atomic_num)
+      Rubabel::Atom.new(new_a)
     end
 
     def delete_atom(atom)
@@ -148,29 +149,31 @@ module Rubabel
       @ob = obmol
     end
 
-    # returns a list of atom indices matching the patterns (corresponds to
-    # the OBSmartsPattern::GetUMapList() method).  Note that the original
-    # GetUMapList returns atom *numbers* (i.e., the index + 1).  This method
-    # returns the zero indexed indices.
-    def smarts_indices(smarts_or_string)
+    # returns a list of atom indices matching the patterns (corresponds to the
+    # OBSmartsPattern::GetUMapList() method if uniq==true and GetMapList
+    # method if uniq==false).  Note that the original GetUMapList returns atom
+    # *numbers* (i.e., the index + 1).  This method returns the zero indexed
+    # indices.
+    def smarts_indices(smarts_or_string, uniq=true)
+      mthd = uniq ? :get_umap_list : :get_map_list
       pattern = smarts_or_string.is_a?(Rubabel::Smarts) ? smarts_or_string : Rubabel::Smarts.new(smarts_or_string)
       pattern.ob.match(@ob)
-      pattern.ob.get_umap_list.map {|atm_indices| atm_indices.map {|i| i - 1 } }
+      pattern.ob.send(mthd).map {|atm_indices| atm_indices.map {|i| i - 1 } }
     end
 
     # yields atom arrays matching the pattern.  returns an enumerator if no
     # block is given
-    def each_match(smarts_or_string, &block)
-      block or return enum_for(__method__, smarts_or_string)
+    def each_match(smarts_or_string, uniq=true, &block)
+      block or return enum_for(__method__, smarts_or_string, uniq)
       _atoms = self.atoms
-      smarts_indices(smarts_or_string).each do |ar|
+      smarts_indices(smarts_or_string, uniq).each do |ar|
         block.call(_atoms.values_at(*ar))
       end
     end
 
     # returns an array of matching atom sets.  Consider using each_match.
-    def matches(smarts_or_string)
-      each_match(smarts_or_string).map.to_a
+    def matches(smarts_or_string, uniq=true)
+      each_match(smarts_or_string, uniq).map.to_a
     end
 
     def matches?(smarts_or_string)
@@ -347,9 +350,9 @@ module Rubabel
     def delete(obj)
       case obj
       when Rubabel::Bond
-        delete_bond(obj, false)
+        delete_bond(obj)
       when Rubabel::Atom
-        delete_atom(obj, false)
+        delete_atom(obj)
       else 
         raise(ArgumentError, "don't know how to delete objects of type: #{obj.class}")
       end
@@ -371,7 +374,7 @@ module Rubabel
     end
 
     # takes a Rubabel::Bond object or a pair of Rubabel::Atom objects
-    def add_bond(*args)
+    def add_bond!(*args)
       case args.size
       when 1
         ob_bond = args.first.ob
@@ -379,10 +382,11 @@ module Rubabel
         ob_bond.get_begin_atom.add_bond(ob_bond)
         ob_bond.get_end_atom.add_bond(ob_bond)
       when 2
-        ob_bond = Rubabel::Bond[ *args ].ob
-        ob_bond.get_begin_atom.add_bond(ob_bond)
-        ob_bond.get_end_atom.add_bond(ob_bond)
-        @ob.add_bond(ob_bond)
+        @ob.add_bond(args[0].idx, args[1].idx, args[2] || 1)
+        #ob_bond = Rubabel::Bond[ *args ].ob
+        #ob_bond.get_begin_atom.add_bond(ob_bond)
+        #ob_bond.get_end_atom.add_bond(ob_bond)
+        #@ob.add_bond(ob_bond)
       end
     end
 

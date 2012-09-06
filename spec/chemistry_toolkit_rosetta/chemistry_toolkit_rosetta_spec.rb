@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'fileutils'
 
 # http://ctr.wikia.com/wiki/Chemistry_Toolkit_Rosetta_Wiki
 
@@ -22,6 +23,10 @@ def unlink(file)
 end
 
 describe 'Chemistry Toolkit Rosetta Wiki' do
+
+  def equivalent_pngs(png1, png2)
+    (png1.size - png2.size < 50) && (png1[0..100] == png2[0..100])
+  end
 
   before(:each) do
     @orig_dir = Dir.pwd
@@ -223,20 +228,22 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
   end
 =end
 
-  xspecify 'Depict a compound as an image' do
+  specify 'Depict a compound as an image' do
     # http://ctr.wikia.com/wiki/Depict_a_compound_as_an_image
     wiki_code do
       require 'rubabel'
       mol = Rubabel["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"]
-      mol.draw(title: "Caffeine", size: 900, format: :png, filename: 'caffeine.png')
-      mol.draw  # should produce mol.svg according to defaults
-      mol.draw(title: "Caffeine", size: 900, filename: 'caffeine.svg') # default format svg
-
-      #Rubabel["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"].write_file("caffeine.svg")
+      mol.title = 'Caffeine'
+      mol.write('caffeine.png')
+      # NOTE: use svg and convert to png to change image size
     end
-    #OR, using commandline
-		#%x{obabel -:"CN1C=NC2=C1C(=O)N(C(=O)N2C)C" -O "mol.png" -xP 300}
+    png_out = IO.read(@wiki_spec_dir + "/caffeine.png")
+    key_out = IO.read(@keydir + "/caffeine.frozen.png")
+    equivalent_pngs(png_out, key_out).should be_true
+    File.unlink('caffeine.png')
   end
+  #OR, using commandline
+  #%x{obabel -:"CN1C=NC2=C1C(=O)N(C(=O)N2C)C" -O "mol.png" -xP 300}
 
   specify 'Highlight a substructure in the depiction' do
     # http://ctr.wikia.com/wiki/Highlight_a_substructure_in_the_depiction
@@ -246,19 +253,92 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
       require 'rubabel'
       mol = Rubabel.foreach("benzodiazepine.sdf.gz").find {|mol| mol.title == "3016" }
       mol.highlight_substructure!("c1ccc2c(c1)C(=NCCN2)c3ccccc3").remove_h!
-      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      # this guy needs to be png 200x250 px !!!!!!!!
-      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       mol.write("3016_highlighted.rubabel.png", u: true)
+      # NOTE: use svg and convert to png to change image size
     end
+    png_out = IO.read(@wiki_spec_dir + "/3016_highlighted.rubabel.png")
+    key_out = IO.read(@keydir + "/3016_highlighted.rubabel.frozen.png")
+    equivalent_pngs(png_out, key_out)
+    File.unlink('3016_highlighted.rubabel.png')
   end
 
+  xspecify 'Align the depiction using a fixed substructure' do
+    # http://ctr.wikia.com/wiki/Align_the_depiction_using_a_fixed_substructure
+		#TODO
+	end
+
+  specify 'Unique SMARTS matches against a SMILES string' do
+    # http://ctr.wikia.com/wiki/Unique_SMARTS_matches_against_a_SMILES_string
+    output = wiki_code_capture_stdout do
+      require 'rubabel'
+      mol = Rubabel["C1CC12C3(C24CC4)CC3"]
+      [false, true].map {|uniq| puts mol.matches("*1**1", uniq).size }
+    end
+    output.should == "24\n4\n"
+  end
+
+  specify 'Calculate TPSA' do
+    output = wiki_code_capture_stdout do
+      require 'rubabel'
+      lines = IO.readlines("tpsa.tab")
+      header = lines.shift
+      @patterns = lines.map {|line| line.chomp.split("\t") }
+
+      def TPSA(mol)
+        @patterns.inject(0.0) {|s,p| s + p[0].to_f * mol.matches(p[1], false).size }
+      end
+      puts TPSA( Rubabel["CN2C(=O)N(C)C(=O)C1=C2N=CN1C"] )
+    end
+    output.should == "61.82\n"
+  end
+
+  specify 'Find the graph diameter' do
+    output = wiki_code_capture_stdout do
+      require 'rubabel'
+      puts Rubabel["CC(C)C(C(=O)NC(=O)C1CCCN1C(=O)C(C)NC(=O)C(C)NC(=O)CCC(=O)OC)NC2=CC=C(C=C2)[N+](=O)[O-]"].graph_diameter
+    end
+    output.should == "24\n"
+  end
+
+  specify 'Break rotatable bonds and report the fragments' do
+    output = wiki_code_capture_stdout do
+      smarts = "[!$([NH]!@C(=O))&!D1&!$(*#*)]-&!@[!$([NH]!@C(=O))&!D1&!$(*#*)]"
+      mol = Rubabel["c1ccc2c(c1)C(=NC(C(=O)N2CC(=O)O)Cc3ccc(cc3)O)c4cccc(c4)O"]
+      mol.matches(smarts).each do |atom1, atom2|
+        mol.delete(atom1.get_bond(atom2))
+        [atom1, atom2].each do |old_a|
+          mol.add_bond!(old_a, mol.add_atom!(0))
+        end
+      end
+      puts "#{mol.to_s.gsub('.',"\n")}"
+    end
+    output.should == "*C*\n*C*\n*C(=O)O\nO=C1C(*)N=C(c2c(N1*)cccc2)*\n*c1cccc(c1)O\n*c1ccc(cc1)O\n"
+  end
+
+  xit 'Perform a substructure search on SDF file and report the number of false positives' do
+    output = wiki_code_capture_stdout do
+      require 'rubabel'
+      smart = Rubabel::Smarts.new("C1C=C(NC=O)C=CC=1")
+      sm_mol = Rubabel[smart.to_s]
+      count = 0
+      Rubabel.foreach("benzodiazepine.sdf.gz").map do |mol|
+        count += 1 if sm_mol.to_s == mol.ob_fingerprint.to_s
+      end
+      #aromatize should be automatic for converstion from smarts??
+      #fingerprint search
+      #bitTest/full substructure match
+      puts count
+      #		puts "#{mols.size} total\n#{num_true_matches} matches\n#{num_matches - num_true_matches}"
+    end
 
 
+    #   output.should == "12386 total\n8836 matches\n1 false positives\n"
+    output.should == ""
+  end
+
+  xit 'Change stereochemistry of certain atoms in SMILES file' do
+    #TODO
+  end
 
 
 
