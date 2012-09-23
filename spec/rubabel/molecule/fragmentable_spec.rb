@@ -21,6 +21,23 @@ describe Rubabel::Molecule::Fragmentable do
       expect { mol.fragment(rules: [:wackiness]) }.to raise_error
     end
 
+    describe 'primary oxygen or peroxide appendage dumping to form C=O' do
+      # rule 1a
+
+    end
+
+    describe 'oxygen alpha/beta hydrogen stealing' do
+      # 2
+    end
+
+    describe 'oxygen bond stealing' do
+      # oxygen just steals the electron pair it is attached to.  This
+      # typically results in a negatively charged oxygen and a positively
+      # charged carbo-cation.
+    end
+
+
+
     describe ':sp3c_nitrogen_double_bond' do
 
       it 'cleaves like an ether a secondary NH group if possible' do
