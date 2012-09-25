@@ -63,6 +63,25 @@ module Rubabel
       @ob.set_bond_order(val)
     end
 
+    # returns self
+    def set_atoms!(beg_atom, end_atom)
+      @ob.set_begin(beg_atom.ob)
+      @ob.set_end(end_atom.ob)
+      self
+    end
+
+    # Sets the beginning atom of the bond to atom. returns self
+    def set_begin!(atom)
+      @ob.set_begin(atom.ob)
+      self
+    end
+
+    # Sets the end atom of the bond to the given atom. returns self
+    def set_end!(atom)
+      @ob.set_end(atom.ob)
+      self
+    end
+
     # returns an array of Rubabel::Atoms
     def atoms
       [@ob.get_begin_atom.upcast, @ob.get_end_atom.upcast]

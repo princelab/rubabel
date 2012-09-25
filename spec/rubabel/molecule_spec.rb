@@ -48,29 +48,30 @@ describe Rubabel::Molecule do
     mol.csmiles.should == "CCO.C"
   end
 
-  specify '#add_atom! with a Rubabel::Atom'
-
-  specify '#add_bond! adds a bond (and updates atoms)' do
+  specify '#dup duplicates the molecule' do
     mol = Rubabel["CCO"]
-    atom = mol.add_atom!(0)
-    mol.add_bond!(mol.atoms[1], atom)
-    mol.csmiles.should == '*C(O)C'
+    dup_mol = mol.dup
+    mol.atoms[0].ob.set_atomic_num(9)
+    mol.csmiles.should == "OCF"
+    dup_mol.csmiles.should == "CCO"
   end
 
-#  specify '#add_bond adds a bond (and updates atoms)' do
-#    c = Rubabel::Atom[:c]
-#    o = Rubabel::Atom[:o]
-#    mol = Rubabel::Molecule.from_atoms_and_bonds([c,o])
-#    mol.add_bond(c,o)
-#    puts "BONDS:"
-#    p mol.bonds
-#    puts "ATOMS:"
-#    p mol.atoms
-#    puts "C ATOMS:"
-#    p c.atoms
-#    puts "O ATOMS:"
-#    p o.atoms
-#  end
+  specify '#add_atom! with a Rubabel::Atom'
+
+  describe '#add_bond! adds a bond (and updates atoms)' do
+    specify 'given two atoms' do
+      mol = Rubabel["CCO"]
+      atom = mol.add_atom!(0)
+      mol.add_bond!(mol.atoms[1], atom)
+      mol.csmiles.should == '*C(O)C'
+    end
+  end
+
+  specify '#atom(id) retrieves atom by id num' do
+    mol = Rubabel["CCO"]
+    o = mol.find {|a| a.el == :o }
+    mol.atom(o.id).id.should == o.id
+  end
 
   specify '#swap! can swap atoms around' do
     mol = Rubabel["NCC(=O)O"]
@@ -220,6 +221,7 @@ describe Rubabel::Molecule do
   describe 'breaking a molecule' do
     before(:each) do
       @mol =  Rubabel::Molecule.from_string("NC(=O)CO")
+      @n = @mol.find {|a| a.el == :n }
     end
 
     it 'num_atoms, atoms and each_atom are sensitive to #add_h!' do
@@ -254,6 +256,20 @@ describe Rubabel::Molecule do
       @mol.num_atoms.should == num_atoms_before
       csmiles = reply.map(&:csmiles)
       csmiles.sort.should == %w(N CC=O O).sort
+    end
+
+    it 'can split fragments (akin to separate)' do
+      @mol.delete_bond(@n, @n.atoms.first)
+      pieces = @mol.split
+      pieces.map(&:csmiles).sort.should == ["N", "OCC=O"]
+    end
+
+    it 'can iterate through fragments' do
+      expected = %w(N OCC=O)
+      @mol.delete_bond(@n, @n.atoms.first)
+      @mol.each_fragment do |frag|
+        frag.csmiles.should == expected.shift
+      end
     end
 
   end

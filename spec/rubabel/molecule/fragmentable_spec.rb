@@ -30,32 +30,27 @@ describe Rubabel::Molecule::Fragmentable do
         frags.flatten(1).map(&:csmiles).should == ["C[NH3+]", "CCC=O", "C([NH3+])C=O", "CC"]
       end
 
-      HERE <--> still working on peroxide (need to figure out best way to transfer group)
-      # swap might be the simplest
-
       describe 'peroxide' do
         mol = Rubabel["NCC(OO)CC"]
         frags = mol.fragment(rules: [:cad_oo])
         frags.flatten(1).each_with_index do |f,i|
           f.write("mol#{i}.svg")
         end
+        frags.flatten(1).map(&:csmiles).should == ["OC[NH3+]", "CCC=O", "C([NH3+])C=O", "CCO"]
       end
 
-     # describe 'cad_o: carboxylate' do
-        #mol = Rubabel["CCC(=O)O"]
-        #pieces = mol.fragment(rules: [:cad_o])
-        #pieces.size.should == 4
-        #p pieces
-      #end
+      describe 'cad_o: carboxylate' do
+        mol = Rubabel["CCC(=O)O"]
+        pieces = mol.fragment(rules: [:cad_o])
+        pieces.flatten(1).map(&:csmiles).should == ["[CH2-]C", "O=C=O"]
+      end
 
-      #describe 'cad_o: carboxylic acid' do
-        #mol = Rubabel["CCC(=O)O"]
-        #mol.add_h!(1.5)
-        #pieces = mol.fragment(rules: [:cad_o])
-        #pieces.size.should == 4
-        #p pieces
-      #end
-
+      describe 'cad_o: carboxylic acid' do
+        mol = Rubabel["CCC(=O)O"]
+        mol.add_h!(1.5)
+        pieces = mol.fragment(rules: [:cad_o])
+        pieces.flatten(1).map(&:csmiles).should == ["CC", "O=C=O"]
+      end
     end
 
     describe 'oxygen bond stealing' do

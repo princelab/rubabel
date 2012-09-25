@@ -166,12 +166,28 @@ module Rubabel
         if opts[:rules].any? {|r| [:cad_o, :cad_oo].include?(r) }
           self.each_match("C[O;h1,O]", search_only_uniq_set) do |carbon, oxygen|
             appendage = oxygen.atoms.find {|a| a.el != :c }
-            self.feint_double_bond(carbon.get_bond(oxygen)) do |mol|
-              carbon.atoms.select {|a| a.el == :c }.each do |carbon_nbr|
-                frag_pair = mol.split(carbon.get_bond(carbon_nbr))
-              end
+            if oxygen.charge != 0
+              ocharge = oxygen.charge
             end
-
+            #self.feint_double_bond(carbon.get_bond(oxygen)) do |mol|
+            carbon.atoms.select {|a| a.el == :c }.each do |carbon_nbr|
+              new_mol = self.dup
+              new_oxygen = new_mol.atom(oxygen.id)
+              new_carbon = new_mol.atom(carbon.id)
+              new_carbon_nbr = new_mol.atom(carbon_nbr.id)
+              new_appendage = new_mol.atom(appendage.id) if appendage
+              new_mol.delete_bond(new_carbon.get_bond(new_carbon_nbr))
+              if new_appendage
+                new_mol.delete_bond(new_oxygen.get_bond(new_appendage)) 
+                new_mol.add_bond!(new_carbon_nbr, new_appendage)
+              end
+              if ocharge
+                new_carbon_nbr.charge += ocharge
+                new_oxygen.charge -= ocharge
+              end
+              new_carbon.get_bond(new_oxygen).bond_order = 2
+              fragment_sets << new_mol.split
+            end
           end
         end
 

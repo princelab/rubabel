@@ -254,11 +254,6 @@ module Rubabel
       self
     end
 
-    # calls separate on the OBMol object
-    def separate!
-      @ob.separate
-    end
-
     # returns just the smiles string :smi (not the id)
     def smiles
       to_s(:smi)
@@ -308,9 +303,19 @@ module Rubabel
       self
     end
 
+    # gets the bond by id
+    def bond(id)
+      @ob.get_bond_by_id(id).upcast
+    end
+
     # returns the array of bonds.  Consider using #each_bond
     def bonds
       each_bond.map.to_a
+    end
+
+    # gets the atom by id
+    def atom(id)
+      @ob.get_atom_by_id(id).upcast
     end
 
     # returns the array of atoms. Consider using #each
@@ -358,8 +363,15 @@ module Rubabel
       end
     end
 
-    def delete_bond(bond)
-      @ob.delete_bond(bond.ob, false)
+    # if given a bond, deletes it (doesn't garbage collect).  If given two
+    # atoms, deletes the bond between them.
+    def delete_bond(*args)
+      case args.size
+      when 1
+        @ob.delete_bond(args[0].ob, false)
+      when 2
+        @ob.delete_bond(args[0].get_bond(args[1]).ob, false)
+      end
     end
 
     def delete_atom(atom)
@@ -373,21 +385,15 @@ module Rubabel
       self
     end
 
-    # takes a Rubabel::Bond object or a pair of Rubabel::Atom objects
-    def add_bond!(*args)
-      case args.size
-      when 1
-        ob_bond = args.first.ob
-        @ob.add_bond(ob_bond)
-        ob_bond.get_begin_atom.add_bond(ob_bond)
-        ob_bond.get_end_atom.add_bond(ob_bond)
-      when 2
-        @ob.add_bond(args[0].idx, args[1].idx, args[2] || 1)
-        #ob_bond = Rubabel::Bond[ *args ].ob
-        #ob_bond.get_begin_atom.add_bond(ob_bond)
-        #ob_bond.get_end_atom.add_bond(ob_bond)
-        #@ob.add_bond(ob_bond)
-      end
+    # creates a new (as yet unspecified) bond associated with the molecule and gives it a unique id
+    def new_bond
+      @ob.new_bond.upcast
+    end
+
+    # takes a pair of Rubabel::Atom objects and adds a bond to the molecule
+    # returns whether the bond creation was successful.
+    def add_bond!(atom1, atom2, order=1)
+      @ob.add_bond(atom1.idx, atom2.idx, order)
     end
 
     # yields self after deleting the specified bonds.  When the block is
@@ -405,14 +411,24 @@ module Rubabel
     end
 
     # splits the molecules at the given bonds and returns the fragments.  Does
-    # not alter the caller.
+    # not alter the caller.  If the molecule is already fragmented, then
+    # returns the separate fragments.
     def split(*bonds)
-      delete_and_restore_bonds(*bonds) do |mol|
-        mol.ob.separate.map(&:upcast)
+      if bonds.size > 0
+        delete_and_restore_bonds(*bonds) do |mol|
+          mol.ob.separate.map(&:upcast)
+        end
+      else
+        self.ob.separate.map(&:upcast)
       end
     end
 
-    alias_method :separate, :split
+    def each_fragment(&block)
+      block or return enum_for(__method__)
+      @ob.separate.each do |ob_mol|
+        block.call( ob_mol.upcast )
+      end
+    end
 
     # emits smiles without the trailing tab, newline, or id.  Use write_string
     # to get the default OpenBabel behavior (ie., tabs and newlines).
