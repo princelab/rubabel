@@ -17,6 +17,40 @@ describe Rubabel::Atom do
     chlorine.id.should == 3
   end
 
+  it 'properly removes hydrogens (explicit H)' do
+    mol = Rubabel["CC"]
+    mol.add_h!
+    mol.atoms[0].remove_an_h!
+    mol.atoms[0].charge += 1
+    mol.formula.should == "C2H5"
+    mol.csmiles.should == 'C[CH2+]'
+    mol.exact_mass.round(5).should == 29.03913
+    mol.charge.should == 1
+
+    # need to get adding working!!!
+    #p mol.atoms[0].spin
+    #mol.atoms[0].add_an_h!
+    #p mol.atoms[0].spin
+    #mol.formula.should == 'C2H6'
+    #mol.atoms[0].charge -= 1
+    #mol.exact_mass.should == 323
+    #mol.charge.should == 0
+  end
+
+  it 'properly removes and adds hydrogens (implicit H)' do
+    mol = Rubabel["CC"]
+    mol.atoms[0].remove_an_h!
+    mol.formula.should == "C2H5"
+    mol.csmiles.should == 'C[CH2]'
+    mol.atoms[0].charge += 1
+    mol.csmiles.should == 'C[CH2+]'
+
+    # still need to properly implement
+    #mol.atoms[0].add_an_h!
+    #mol.formula.should == 'C2H6'
+    #p mol
+  end
+
   describe 'working with a complex molecule' do
 
     before do

@@ -53,11 +53,27 @@ describe Rubabel::Molecule::Fragmentable do
       end
     end
 
-    describe 'oxygen bond stealing' do
+    describe 'oxe: oxygen electron stealing' do
       # oxygen just steals the electron pair it is attached to.  This
       # typically results in a negatively charged oxygen and a positively
       # charged carbo-cation.
       describe 'ether to ions' do
+        mol = Rubabel["NCCOCC"]
+        #mol.add_h!
+        pieces = mol.fragment(rules: [:oxed_ether])
+        m = pieces.first.first
+        #[CH2+]CH2NH3+
+        #  C2H7N
+
+        p m
+        m.add_h!
+        h = m.atoms[4].atoms.find {|a| a.el == :h }
+        m.delete_atom(h)
+        p m
+        p m.atoms
+        #mol = Rubabel["NCO"]
+        #pieces = mol.fragment(rules: [:oxed_ether])
+        #pieces.size.should == 0
       end
 
       describe 'ester to ions' do

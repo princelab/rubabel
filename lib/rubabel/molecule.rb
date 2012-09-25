@@ -144,7 +144,6 @@ module Rubabel
     # to add_h!
     def formula() @ob.get_formula end
 
-
     def initialize(obmol)
       @ob = obmol
     end

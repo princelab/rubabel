@@ -118,8 +118,26 @@ describe Rubabel::Molecule do
     ar.first.should be_a(OpenBabel::OBRing)
   end
 
+  describe 'making carbo-cations: spin_multiplicity and charges' do
+    # http://openbabel.org/docs/2.3.1/Features/Radicals.html
+    subject { mol = Rubabel["CC"] }
+    it 'can be turned into a carbocation' do
+      mol = subject
+      c = mol.atoms[0]
+      c.ob.set_spin_multiplicity 2
+      p c.bonds.size
+      p c.atoms
+      mthds.each do |mthd|
+        puts "#{mthd}: #{c.ob.send(mthd.to_sym)}"
+      end
+      p mol
+      p mol.formula
+      mol.write("postchargeandimplicitvalence.svg")
+    end
+  end
+
   describe 'masses' do
-    subject { Rubabel::Molecule.from_string("C(=O)COC(=O)C[NH3+]") }
+    subject { Rubabel["C(=O)COC(=O)C[NH3+]"] }
     it '#mol_wt (or #avg_mass)' do
       subject.mol_wt.should be_within(0.000001).of(118.11121999999999)
     end
@@ -139,7 +157,7 @@ describe Rubabel::Molecule do
 
   describe 'pH' do
 
-    subject { Rubabel::Molecule.from_string("NCC(=O)OCC(=O)O") }
+    subject { Rubabel["NCC(=O)OCC(=O)O"] }
 
     it '#correct_for_ph! neutral' do
       subject.correct_for_ph!.to_s.should == '[O-]C(=O)COC(=O)C[NH3+]'

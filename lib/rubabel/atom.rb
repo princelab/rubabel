@@ -153,6 +153,49 @@ module Rubabel
       @ob.get_partial_charge
     end
 
+    # permanently removes a hydrogen by properly incrementing the
+    # spin_multiplicity (and deleting a hydrogen if one is explicitly attached
+    # to the atom).  If called twice a carbene or nitrene can be made (giving
+    # a spin_multiplicity of 3)
+    def remove_an_h!
+      new_spin = 
+        case @ob.get_spin_multiplicity
+        when 0 then 2
+        when 2 then 3
+        end
+      @ob.set_spin_multiplicity(new_spin)
+      mol.title = mol.to_s
+      self.mol.write("before_REM.svg")
+      # some molecules do not have explicit hydrogens, but after changing spin
+      # they do have explicit hydrogens on *that* atom!
+      atoms.each do |atom|
+        if atom.atomic_num == 1
+          self.mol.delete_atom(atom)
+          break
+        end
+      end
+      mol.title = mol.to_s
+      self.mol.write("after_REM.svg")
+      self
+    end
+
+    # opposite of remove_an_h!
+    # THIS IS STILL BROKEN!!!
+    def add_an_h!
+      abort 'bad method right now'
+      new_spin = 
+        case @ob.get_spin_multiplicity
+        when 2 then 0
+        when [1,3] then 2
+        end
+      h = mol.add_atom!(1)
+      h.ob.set_type 'H'
+      mol.add_bond!(self, h)
+
+      @ob.set_spin_multiplicity(new_spin)
+      self
+    end
+
     def spin
       @ob.get_spin_multiplicity
     end
