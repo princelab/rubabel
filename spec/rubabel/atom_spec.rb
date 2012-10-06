@@ -17,6 +17,8 @@ describe Rubabel::Atom do
     chlorine.id.should == 3
   end
 
+  specify 'equality stuff!!'
+
   it 'properly removes hydrogens (explicit H)' do
     mol = Rubabel["CC"]
     mol.add_h!
@@ -35,6 +37,13 @@ describe Rubabel::Atom do
     #mol.atoms[0].charge -= 1
     #mol.exact_mass.should == 323
     #mol.charge.should == 0
+  end
+
+  it 'can find atom identities with simple questions' do
+    mol = Rubabel["NCC(O)CC(=O)"]
+    (c_exp, o_exp) = mol.matches("C=O").first
+    mol.find(&:carbonyl_carbon?).id.should == c_exp.id
+    mol.find(&:carbonyl_oxygen?).id.should == o_exp.id
   end
 
   it 'properly removes and adds hydrogens (implicit H)' do

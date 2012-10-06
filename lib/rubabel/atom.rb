@@ -79,7 +79,6 @@ module Rubabel
       end
     end
 
-    alias_method :each, :each_bond
 
     # retrieves the bond 
     def get_bond(atom)
@@ -101,6 +100,7 @@ module Rubabel
         _atom = @ob.next_nbr_atom(iter)
       end
     end
+    alias_method :each, :each_atom
 
     # returns the neighboring atoms.  Consider using each_atom.
     def atoms
@@ -179,6 +179,10 @@ module Rubabel
       self
     end
 
+    def ==(other)
+      mol == other.mol && id == other.id 
+    end
+
     # opposite of remove_an_h!
     # THIS IS STILL BROKEN!!!
     def add_an_h!
@@ -246,8 +250,25 @@ module Rubabel
     def hbond_donor?() @ob.is_hbond_donor end
     def hbond_donor_h?() @ob.is_hbond_donor_h end
 
+    def double_bond?
+      each_bond.any? {|bond| bond.bond_order == 2 }
+    end
+
+    def single_bond?
+      each_bond.any? {|bond| bond.bond_order == 1 }
+    end
+
     def carboxyl_carbon?
-      atoms.any?(&:carboxyl_oxygen?)
+      each_atom.any?(&:carboxyl_oxygen?)
+    end
+
+    def carbonyl_oxygen?
+      ats = atoms
+      ats.size == 1 && ats.first.el == :c && double_bond?
+    end
+
+    def carbonyl_carbon?
+      each_atom.any?(&:carbonyl_oxygen?)
     end
 
 #    # does this carbon hold a primary alcohol

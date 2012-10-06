@@ -125,14 +125,8 @@ describe Rubabel::Molecule do
       mol = subject
       c = mol.atoms[0]
       c.ob.set_spin_multiplicity 2
-      p c.bonds.size
-      p c.atoms
-      mthds.each do |mthd|
-        puts "#{mthd}: #{c.ob.send(mthd.to_sym)}"
-      end
-      p mol
-      p mol.formula
-      mol.write("postchargeandimplicitvalence.svg")
+      c.charge += 1
+      mol.csmiles.should == "C[CH2+]"
     end
   end
 
