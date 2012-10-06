@@ -263,11 +263,32 @@ module Rubabel
       to_s(:can)
     end
 
-    # equal if their canonical SMILES strings (including ID) are equal.  This
-    # may become more rigorous in the future
-    def ==(other)
-      self.write_string(:can) == other.write_string(:can)
+    # if you want to test smiles equivalency:
+    # mol1.cmsiles == mol2.csmiles
+
+    # checks to see if the molecules are equal by setting a data key 
+    def equal?(other)
+      p self.class
+      p other.class
+      return false unless other.is_a?(self.class)
+      begin
+        chk = "_eql_chck_#{self.object_id}"
+        dta = other.data
+        p dta 
+        p dta.key?(chk)
+        abort 'here'
+        raise RuntimeError if other.data.key?(chk)
+        other.data[chk]
+        is_same_obj = self.data.key?(chk)
+      ensure
+        p other
+        other.data.delete(chk)
+      end
+      is_same_obj
     end
+
+    alias_method :==, :equal?
+    alias_method :eql?, :equal?
 
     # iterates over the molecule's Rubabel::Atom objects
     def each_atom(&block)

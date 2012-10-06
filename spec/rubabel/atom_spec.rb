@@ -17,7 +17,19 @@ describe Rubabel::Atom do
     chlorine.id.should == 3
   end
 
-  specify 'equality stuff!!'
+  specify 'equality' do
+    mol = Rubabel["CCO"]
+    oxygen = mol.atoms[2]
+    oxygen_from_match = mol.matches("CO").first.last
+    (oxygen == oxygen_from_match).should be_true
+    (oxygen.equal?(oxygen_from_match)).should be_true
+    (oxygen.eql?(oxygen_from_match)).should be_true
+
+    mol2 = Rubabel["CCO"]
+    (mol.atoms[0] == mol2.atoms[0]).should_not be_true
+    (mol.atoms[0].equal?(mol2.atoms[0])).should_not be_true
+    (mol.atoms[0].eql?(mol2.atoms[0])).should_not be_true
+  end
 
   it 'properly removes hydrogens (explicit H)' do
     mol = Rubabel["CC"]

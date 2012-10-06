@@ -39,6 +39,12 @@ describe Rubabel::Molecule do
     end
   end
 
+  specify 'equality' do
+    mol = Rubabel["C"]
+    eq_mol = mol.atoms.first.ob.upcast
+    mol.equal?(eq_mol).should be_true
+  end
+
   specify '#add_atom! adds an atom given an atomic number and returns it' do
     mol = Rubabel["CCO"]
     before_size = mol.atoms.size

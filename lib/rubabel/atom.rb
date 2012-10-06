@@ -179,9 +179,18 @@ module Rubabel
       self
     end
 
-    def ==(other)
-      mol == other.mol && id == other.id 
+    # philosophy on equality: there are *so* many ways for two atoms to be
+    # different that we can never really ensure that "equivalence" is met
+    # without calling ~20 methods.  We narrowly define equivalence and let the
+    # user make more complicated equivalency/equality definitions themselves.
+
+    # the exact same atom in the same molecule
+    def equal?(other)
+      mol.equal?(other.mol) && id == other.id 
     end
+
+    alias_method :==, :equal?
+    alias_method :eql?, :equal?
 
     # opposite of remove_an_h!
     # THIS IS STILL BROKEN!!!
