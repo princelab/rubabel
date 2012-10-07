@@ -263,32 +263,39 @@ module Rubabel
       to_s(:can)
     end
 
-    # if you want to test smiles equivalency:
-    # mol1.cmsiles == mol2.csmiles
-
-    # checks to see if the molecules are equal by setting a data key 
+    # checks to see if the molecules are the same OBMol object underneath by
+    # modifying one and seeing if the other changes.  This is because
+    # openbabel routinely creates new objects that point to the same
+    # underlying data store, so even checking for OBMol equivalency is not
+    # enough.
     def equal?(other)
-      p self.class
-      p other.class
       return false unless other.is_a?(self.class)
-      begin
-        chk = "_eql_chck_#{self.object_id}"
-        dta = other.data
-        p dta 
-        p dta.key?(chk)
-        abort 'here'
-        raise RuntimeError if other.data.key?(chk)
-        other.data[chk]
-        is_same_obj = self.data.key?(chk)
-      ensure
-        p other
-        other.data.delete(chk)
+      are_identical = false
+      if self.title == other.title
+        begin
+          obj_id = self.object_id.to_s
+          self.title += obj_id
+          are_identical = (self.title == other.title)
+        ensure
+          self.title.sub(/#{obj_id}$/,'')
+        end
+        are_identical
+      else
+        false
       end
-      is_same_obj
     end
 
-    alias_method :==, :equal?
     alias_method :eql?, :equal?
+
+    # defined as whether the csmiles strings are identical.  This incorporates
+    # more information than the FP2 fingerprint, for instance (try changing
+    # the charge and see how it does not influence the fingerprint).
+    # Obviously, things like title or data will not be evaluated with ==.  See
+    # equal? if you are looking for identity.  More stringent comparisons will
+    # have to be done by hand!
+    def ==(other)
+      other.respond_to?(:csmiles) && (csmiles == other.csmiles)
+    end
 
     # iterates over the molecule's Rubabel::Atom objects
     def each_atom(&block)
@@ -627,6 +634,14 @@ module Rubabel
         end
       end
       distance_matrix.max
+    end
+
+    protected
+    def add_hydrogen_to_formula!
+      string = @ob.get_formula
+      string.sub(/^C?\d*H?(\d*)[^\d]?/) do |md|
+        p md
+      end
     end
 
   end

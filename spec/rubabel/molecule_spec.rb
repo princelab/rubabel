@@ -39,10 +39,22 @@ describe Rubabel::Molecule do
     end
   end
 
-  specify 'equality' do
+  specify 'eql? and equal? mean the objects modify the same underlying openbabel molecule data' do
     mol = Rubabel["C"]
-    eq_mol = mol.atoms.first.ob.upcast
+    eq_mol = mol.atoms.first.mol
     mol.equal?(eq_mol).should be_true
+    another = Rubabel["C"]
+    mol.equal?(another).should be_false
+  end
+
+  specify '== means the canonical smiles strings (:csmiles) are equal' do
+    mol1 = Rubabel["CCO"]
+    mol2 = Rubabel["OCC"]
+    (mol1 == mol2).should be_true
+    mol2.atoms[0].charge += 1
+    (mol1 == mol2).should be_false
+    mol3 = Rubabel["CCCO"]
+    (mol1 == mol3).should be_false
   end
 
   specify '#add_atom! adds an atom given an atomic number and returns it' do

@@ -155,38 +155,40 @@ module Rubabel
 
     # permanently removes a hydrogen by properly incrementing the
     # spin_multiplicity (and deleting a hydrogen if one is explicitly attached
-    # to the atom).  If called twice a carbene or nitrene can be made (giving
-    # a spin_multiplicity of 3)
-    def remove_an_h!
+    # to the atom).  If called with cnt=2 a carbene or nitrene can be made
+    # (giving a spin_multiplicity of 3).  Makes no effort to ensure that the
+    # proper number of hydrogens already exist to be deleted, just alters the
+    # spin_multiplicity and deletes the right number of hydrogens if they are
+    # available to be deleted.  Adds one charge to the atom.
+    def remove_an_h!(add_charge=true)
       new_spin = 
         case @ob.get_spin_multiplicity
         when 0 then 2
         when 2 then 3
         end
       @ob.set_spin_multiplicity(new_spin)
-      mol.title = mol.to_s
-      self.mol.write("before_REM.svg")
-      # some molecules do not have explicit hydrogens, but after changing spin
-      # they do have explicit hydrogens on *that* atom!
       atoms.each do |atom|
         if atom.atomic_num == 1
           self.mol.delete_atom(atom)
           break
         end
       end
-      mol.title = mol.to_s
-      self.mol.write("after_REM.svg")
+      # add the charge
+      (self.charge = charge + 1) if add_charge
       self
     end
 
     # philosophy on equality: there are *so* many ways for two atoms to be
     # different that we can never really ensure that "equivalence" is met
-    # without calling ~20 methods.  We narrowly define equivalence and let the
-    # user make more complicated equivalency/equality definitions themselves.
+    # without calling ~20 methods.  We narrowly define equivalence so it is
+    # useful for that case and let the user make more complicated
+    # equivalency/equality definitions themselves.
 
-    # the exact same atom in the same molecule
+    # the exact same atom in the same molecule.  The equivalency test for
+    # molecules is a little pricey, so better to use something like atom.id ==
+    # other.id if you know you are working within the same molecule.
     def equal?(other)
-      mol.equal?(other.mol) && id == other.id 
+      other.respond_to?(:mol) && mol.equal?(other.mol) && id == other.id 
     end
 
     alias_method :==, :equal?
@@ -194,18 +196,20 @@ module Rubabel
 
     # opposite of remove_an_h!
     # THIS IS STILL BROKEN!!!
-    def add_an_h!
-      abort 'bad method right now'
+    def add_an_h!(remove_charge=true)
       new_spin = 
         case @ob.get_spin_multiplicity
         when 2 then 0
         when [1,3] then 2
         end
-      h = mol.add_atom!(1)
-      h.ob.set_type 'H'
-      mol.add_bond!(self, h)
-
       @ob.set_spin_multiplicity(new_spin)
+      (self.charge = self.charge - 1) if remove_charge
+      mol.add_bond!(self, mol.add_atom!(6))
+      puts "HIAY:"
+      p mol.formula
+      mol.add_hydrogen_to_formula!
+      p mol.formula
+      abort 'here'
       self
     end
 
@@ -291,5 +295,7 @@ module Rubabel
     def inspect
       "<#{type} id:#{id}>"
     end
+
+
   end
 end
