@@ -112,9 +112,10 @@ module Rubabel
     def add_atom!(atomic_num=1)
       # jtp implementation:
       # @ob.add_atom(atom.ob)
-      new_a = @ob.new_atom
-      new_a.set_atomic_num(atomic_num)
-      Rubabel::Atom.new(new_a)
+      new_obatom = @ob.new_atom
+      new_obatom.set_atomic_num(atomic_num)
+      #@ob.add_atom(new_obatom)
+      Rubabel::Atom.new(new_obatom)
     end
 
     def delete_atom(atom)
@@ -636,12 +637,19 @@ module Rubabel
       distance_matrix.max
     end
 
-    protected
+    # adds 1 hydrogen to the formula and returns self
     def add_hydrogen_to_formula!
       string = @ob.get_formula
-      string.sub(/^C?\d*H?(\d*)[^\d]?/) do |md|
-        p md
+      substituted = false
+      new_string = string.sub(/H(\d*)/) { substituted=true; "H#{$1.to_i+1}" }
+      unless substituted
+        new_string = string.sub("^(C?\d*)") { $1 + 'H' }
       end
+      puts 'HERE'
+      p string
+      p new_string
+      #@ob.set_formula(new_string)
+      self
     end
 
   end

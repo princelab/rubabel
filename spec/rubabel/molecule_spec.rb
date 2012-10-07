@@ -10,6 +10,13 @@ describe Rubabel::Molecule do
     end
   end
 
+  #xit 'can add a hydrogen to the formula' do
+    #mol = Rubabel["CCC"]
+    #p mol.formula
+    #mol.add_hydrogen_to_formula!
+    #p mol.formula
+  #end
+
   describe 'png output' do
     it 'creates a png image (corresponds to the svg)' do
       mol = Rubabel["NCC(=O)O"]

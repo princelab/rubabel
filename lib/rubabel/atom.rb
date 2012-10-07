@@ -194,24 +194,37 @@ module Rubabel
     alias_method :==, :equal?
     alias_method :eql?, :equal?
 
-    # opposite of remove_an_h!
-    # THIS IS STILL BROKEN!!!
-    def add_an_h!(remove_charge=true)
-      new_spin = 
-        case @ob.get_spin_multiplicity
-        when 2 then 0
-        when [1,3] then 2
-        end
-      @ob.set_spin_multiplicity(new_spin)
-      (self.charge = self.charge - 1) if remove_charge
-      mol.add_bond!(self, mol.add_atom!(6))
-      puts "HIAY:"
-      p mol.formula
-      mol.add_hydrogen_to_formula!
-      p mol.formula
-      abort 'here'
-      self
-    end
+    ## opposite of remove_an_h!
+    ## THIS IS STILL BROKEN!!!
+    # maybe need to change the type?? C+ -> C2 or C3, but this gets really
+    # invasive...  Why is this so flippin hard to do!!
+    #def add_an_h!(remove_charge=true)
+      #new_spin = 
+        #case @ob.get_spin_multiplicity
+        #when 2 then 0
+        #when [1,3] then 2
+        #end
+      #@ob.set_spin_multiplicity(new_spin)
+      
+      #puts self.inspect_internals
+      #puts "EXAMIN B:"
+      #p self
+      #p self.charge
+      #(self.charge = self.charge - 1) if remove_charge
+      #puts "EXAMIN A:"
+      #puts self.inspect_internals
+      #p self
+      #p self.charge
+      #puts "BEFORE:"
+      #p mol.formula
+      #p mol.atoms
+      #mol.add_bond!(self, mol.add_atom!(1))
+      #puts "AFTER:"
+      #p mol.formula
+      #p mol.atoms
+      #abort 'here'
+      #self
+    #end
 
     def spin
       @ob.get_spin_multiplicity
@@ -294,6 +307,16 @@ module Rubabel
 
     def inspect
       "<#{type} id:#{id}>"
+    end
+
+    def inspect_internals
+      "<" << @ob.methods.grep(/get_/).map do |mthd| 
+        begin
+          "#{mthd.to_s.sub(/get_/,'')}=#{@ob.send(mthd)}" 
+        rescue ArgumentError
+          nil
+        end
+      end.compact.join(" ") << ">"
     end
 
 
