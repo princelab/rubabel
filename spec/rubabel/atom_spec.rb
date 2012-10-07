@@ -17,6 +17,19 @@ describe Rubabel::Atom do
     chlorine.id.should == 3
   end
 
+  describe 'attaching another atom to itself (as part of a molecule)' do
+
+    it 'attaches preformed atom' do
+    end
+
+    it 'attaches given an atomic number' do
+    end
+
+    it 'attaches given an element symbol' do
+    end
+
+  end
+
   specify 'equality' do
     mol = Rubabel["CCO"]
     oxygen = mol.atoms[2]

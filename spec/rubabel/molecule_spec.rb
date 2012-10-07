@@ -58,25 +58,50 @@ describe Rubabel::Molecule do
     mol1 = Rubabel["CCO"]
     mol2 = Rubabel["OCC"]
     (mol1 == mol2).should be_true
-    mol2.atoms[0].charge += 1
+    mol2[0].charge += 1
     (mol1 == mol2).should be_false
     mol3 = Rubabel["CCCO"]
     (mol1 == mol3).should be_false
   end
 
-  specify '#add_atom! adds an atom given an atomic number and returns it' do
-    mol = Rubabel["CCO"]
-    before_size = mol.atoms.size
-    atom = mol.add_atom!(6)
-    atom.el.should == :c
-    (mol.atoms.size - before_size).should == 1
-    mol.csmiles.should == "CCO.C"
+  specify '#[] retrieves atom by index' do
+    mol = Rubabel["NCO"]
+    mol[0].el.should == :n
+    mol[1].el.should == :c
+    mol[2].el.should == :o
+    mol[-1].el.should == :o
+    mol[-2].el.should == :c
+    ar = mol[1..-1]
+    ar.first.el.should == :c
+    ar.last.el.should == :o
+    ar.size.should == 2
+  end
+
+  describe 'adding an atom' do
+    it 'can be added but not attached' do
+      mol = Rubabel["CCO"]
+      atom = mol.add_atom!(:n)
+      atom.el.should == :n
+      atom = mol.add_atom!(8)
+      atom.el.should == :o
+      mol.csmiles.should == "CCO.N.O"
+    end
+
+    it "can be added and attached" do 
+      mol = Rubabel["CCO"]
+      first_carbon = mol[0]
+      mol.add_atom!(:n, first_carbon)
+      mol.csmiles.should == "NCCO"
+    end
+
+    it 'can be made independent and then added' do
+    end
   end
 
   specify '#dup duplicates the molecule' do
     mol = Rubabel["CCO"]
     dup_mol = mol.dup
-    mol.atoms[0].ob.set_atomic_num(9)
+    mol[0].ob.set_atomic_num(9)
     mol.csmiles.should == "OCF"
     dup_mol.csmiles.should == "CCO"
   end
@@ -87,7 +112,7 @@ describe Rubabel::Molecule do
     specify 'given two atoms' do
       mol = Rubabel["CCO"]
       atom = mol.add_atom!(0)
-      mol.add_bond!(mol.atoms[1], atom)
+      mol.add_bond!(mol[1], atom)
       mol.csmiles.should == '*C(O)C'
     end
   end
@@ -148,7 +173,7 @@ describe Rubabel::Molecule do
     subject { mol = Rubabel["CC"] }
     it 'can be turned into a carbocation' do
       mol = subject
-      c = mol.atoms[0]
+      c = mol[0]
       c.ob.set_spin_multiplicity 2
       c.charge += 1
       mol.csmiles.should == "C[CH2+]"

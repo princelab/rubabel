@@ -108,14 +108,30 @@ module Rubabel
       end
     end
 
-    # arg is an atomic number. returns the newly created atom
-    def add_atom!(atomic_num=1)
-      # jtp implementation:
-      # @ob.add_atom(atom.ob)
-      new_obatom = @ob.new_atom
-      new_obatom.set_atomic_num(atomic_num)
-      #@ob.add_atom(new_obatom)
-      Rubabel::Atom.new(new_obatom)
+    # returns self unless no atom was passed in and no attach_to atom was
+    # given, in which case it returns the newly created atom.  arg is an atom,
+    # an atomic number or an element symbol (e.g. :c).  returns self if an
+    # atom was passed in, returns the newly created atom if no atom passed in.
+    # default is to add carbon.
+    def add_atom!(arg=6, attach_to=nil, bond_order=1)
+      if attach_to
+        attach_to.add_atom!(arg, bond_order)
+      else
+        if arg.is_a?(Rubabel::Atom)
+          @ob.add_atom(arg.ob)
+          self
+        else
+          new_obatom = @ob.new_atom
+          arg = Rubabel::EL_TO_NUM[arg] if arg.is_a?(Symbol)
+          new_obatom.set_atomic_num(arg)
+          Rubabel::Atom.new(new_obatom)
+        end
+      end
+    end
+
+    # retrieves the atom by index (accepts everything an array would)
+    def [](*args)
+      atoms[*args]
     end
 
     def delete_atom(atom)
@@ -568,9 +584,9 @@ module Rubabel
       end
     end
 
-    # writes to the file based on the extension given.  If type is given
-    # explicitly, then it is used.  If png is the extension or format, the
-    # png is generated from an svg.
+    # writes to the file based on the extension given (must be recognized by
+    # OpenBabel).  If png is the extension or format, the png is generated
+    # from an svg.
     def write_file(filename, out_options={})
       type = Rubabel.filetype(filename)
       File.write(filename, write_string(type, out_options))
