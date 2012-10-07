@@ -87,11 +87,14 @@ describe Rubabel::Molecule do
       mol.csmiles.should == "CCO.N.O"
     end
 
-    it "can be added and attached" do 
+    it "can be added and attached by el symbol or atomic number" do 
       mol = Rubabel["CCO"]
       first_carbon = mol[0]
       mol.add_atom!(:n, first_carbon)
       mol.csmiles.should == "NCCO"
+
+      mol.add_atom!(:s, first_carbon)
+      mol.csmiles.should == "NC(S)CO"
     end
 
     it 'can be made independent and then added' do
