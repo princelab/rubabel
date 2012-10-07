@@ -122,18 +122,30 @@ Have some bonds to break?, split makes new molecules split from that bond(s)
 
 ### Add & Delete atoms/bonds
 
+#### Adding
+
     mol = Rubabel["OCC"]
-    carbon = mol.add_atom!(6)
-    # add the new carbon to the last carbon
-    last_carbon = mol[2]
-    # add it directly to the carbon:
-    last_carbon.add_atom!(carbon)
-    # alternatively, add it at the molecule level:
-    mol.add_bond!(last_carbon, carbon, 2)
+    # adds a carbon, then an oxygen to last indexed atom by atomic number
+    mol << 6 << 8    # #<Mol "OCCCO">
+    mol << :c << :o  # same thing
 
+    # add an ethyl group specifically to second carbon
+    mol = Rubabel["OCC"]
+    mol[1] << :c << :c
 
-    
+    # add a vinyl group to second carbon (use method notation and parenthesis 
+    # because we are going to specify 2 arguments (the bond order):
+    ( mol[1] << :c).<<(:c, 2)
 
+#### Deleting
+
+    # delete an atom:
+    mol = Rubabel["NCO"]
+    mol.delete(mol[0])  # -> #<Mol CO>
+
+    # delete a bond:
+    bond = mol[0].get_bond(mol[1])
+    mol.delete(bond)  # ->  #<Mol C.O>
 
 ## Installing
 

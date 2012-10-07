@@ -8,6 +8,17 @@ describe Rubabel::Molecule do
       mol = Rubabel["CC(O)O"]
       mol.csmiles.should == "CC(O)O"
     end
+
+    it 'can be made with an existing obmol object' do
+      mol = Rubabel["CC(O)O"]
+      mol_dup = Rubabel::Molecule.new(mol.ob)
+    end
+
+    it 'can be made fresh' do
+      mol = Rubabel::Molecule.new
+      mol.atoms.size == 0
+      mol.title.should == ''
+    end
   end
 
   #xit 'can add a hydrogen to the formula' do
@@ -93,12 +104,18 @@ describe Rubabel::Molecule do
       mol.add_atom!(:n, first_carbon)
       mol.csmiles.should == "NCCO"
 
-      mol.add_atom!(:s, first_carbon)
-      mol.csmiles.should == "NC(S)CO"
+      mol.add_atom!(16, first_carbon)
+      mol.csmiles.should == "NC(CO)S"
     end
 
-    it 'can be made independent and then added' do
-    end
+  end
+  
+  specify '#<< adds atom to the last atom and returns the mol' do
+    mol = Rubabel::Molecule.new
+    # by element symbol or atomic number
+    reply = (mol << :n << :c)
+    reply.should be_a(Rubabel::Molecule)
+    reply.csmiles.should == 'CN'
   end
 
   specify '#dup duplicates the molecule' do

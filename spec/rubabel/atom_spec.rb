@@ -5,7 +5,7 @@ require 'rubabel/atom'
 
 describe Rubabel::Atom do
 
-  it 'can be created given an element symbol' do
+  xit 'can be created given an element symbol' do
     hydrogen = Rubabel::Atom[:h]
     hydrogen.el.should == :h
 
@@ -89,13 +89,19 @@ describe Rubabel::Atom do
       end
     end
 
+    specify '#<<(atom) adds an atom and returns the added atom' do
+      mol = Rubabel["C"]
+      reply = (mol[0] << :n << :o)
+      reply.should be_a(Rubabel::Atom)
+      mol.csmiles.should == 'CNO'
+    end
 
     it '#mol retrieves the parent molecule' do
       @atom.mol.should == @mol
 
-      # no parent molecule 
-      h = Rubabel::Atom[:h]
-      h.mol.should be_nil
+      ## no parent molecule 
+      #h = Rubabel::Atom[:h]
+      #h.mol.should be_nil
     end
 
     it 'can get the bonds' do
@@ -105,8 +111,7 @@ describe Rubabel::Atom do
       @atom.bonds.size.should == 4
     end
 
-    it 'can add a bond' do
-    end
+    it 'can add a bond'
 
     it 'can get the neighboring atoms' do
       @atom.id.should == 0

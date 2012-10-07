@@ -108,18 +108,16 @@ module Rubabel
       end
     end
 
-    # returns self unless no atom was passed in and no attach_to atom was
-    # given, in which case it returns the newly created atom.  arg is an atom,
-    # an atomic number or an element symbol (e.g. :c).  returns self if an
-    # atom was passed in, returns the newly created atom if no atom passed in.
-    # default is to add carbon.
+    # returns the atom passed in or that was created.  arg is a pre-existing
+    # atom, an atomic number or an element symbol (e.g. :c).  default is to
+    # add carbon.
     def add_atom!(arg=6, attach_to=nil, bond_order=1)
       if attach_to
         attach_to.add_atom!(arg, bond_order)
       else
         if arg.is_a?(Rubabel::Atom)
           @ob.add_atom(arg.ob)
-          self
+          arg
         else
           new_obatom = @ob.new_atom
           arg = Rubabel::EL_TO_NUM[arg] if arg.is_a?(Symbol)
@@ -161,8 +159,8 @@ module Rubabel
     # to add_h!
     def formula() @ob.get_formula end
 
-    def initialize(obmol)
-      @ob = obmol
+    def initialize(obmol=nil)
+      @ob = obmol.nil? ? OpenBabel::OBMol.new  : obmol
     end
 
     # returns a list of atom indices matching the patterns (corresponds to the
@@ -490,6 +488,18 @@ module Rubabel
     # returns a Rubabel::MoleculeData hash
     def data
       Rubabel::MoleculeData.new(@ob)
+    end
+
+    # adds the atom (takes atomic number, element symbol or preexisting atom)
+    # and returns self
+    def <<(arg, bond_order=1)
+      last_atom = atoms[-1]
+      if last_atom
+        last_atom.add_atom!(arg, bond_order)
+      else
+        add_atom!(arg)
+      end
+      self
     end
 
     # sensitive to add_h!

@@ -14,14 +14,30 @@ module Rubabel
     include Enumerable
 
     class << self
-      # takes an element symbol and creates that atom.  If el_sym is set to
-      # nil or 0, then an atom of atomic number 0 is used
-      def [](el_sym=:h, id=nil)
-        ob_atom = OpenBabel::OBAtom.new
-        ob_atom.set_id(id) if id
-        ob_atom.set_atomic_num(Rubabel::EL_TO_NUM[el_sym] || 0)
-        self.new(ob_atom)
-      end
+      # I cannot figure out how to get the atom attached properly into a
+      # molecule.  Until I figure that out, no sense in having this method
+      # exposed:
+      #
+      # takes an atomic number or element symbol and creates that atom.  If
+      # arg is set to nil, then an atom of atomic number 0 is used
+      # (represented by '*' in smiles)
+      #def [](arg=:c)
+      #  ob_atom = OpenBabel::OBAtom.new
+      #  atomic_number = 
+      #    if arg.nil? then 0
+      #    elsif arg.is_a?(Symbol) 
+      #      Rubabel::EL_TO_NUM[arg]
+      #    else
+      #      arg
+      #    end
+      #  ob_atom.set_atomic_num(atomic_number)
+      #  self.new(ob_atom)
+      #end
+    end
+
+    # adds an atom and returns the added atom (allows chaining)
+    def <<(atom, bond_order=1)
+      add_atom!(atom, bond_order)
     end
 
     # returns the molecule that is parent of this atom
@@ -59,14 +75,14 @@ module Rubabel
       NUM_TO_ELEMENT[atomic_num]
     end
 
-    # creates a bond and adds it to both atoms.  If given an atomic number or
-    # element symbol creates the atom and then bonds it.  Returns self.
+    # creates a bond and adds it to both atoms.  Returns the passed in or
+    # newly created atom.
     def add_atom!(arg, bond_order=1)
       unless arg.is_a?(Rubabel::Atom)
         arg = mol.add_atom!(arg)
       end
       @ob.get_parent.add_bond(self.ob.get_idx, arg.ob.get_idx, bond_order)
-      self
+      arg
     end
 
     def each_bond(&block)
