@@ -15,7 +15,7 @@ module Rubabel
       #  :sp3c_oxygen_double_bond_water_loss, :sp3c_oxygen_double_bond_far_side_sp2, :sp3c_oxygen_double_bond_far_side_sp3, :sp3c_oxygen_asymmetric_far_sp3
       #]
 
-      RULES = Set[:cad_o, :cad_oo, :oxed_ether]
+      RULES = Set[:cad_o, :cad_oo, :oxe, :oxe_phde]
 
       DEFAULT_OPTIONS = {
         rules: RULES,
@@ -174,29 +174,14 @@ module Rubabel
       # breaks the bond and gives the electrons to the oxygen
       def carbon_oxygen_esteal(carbon, oxygen)
         nmol = self.dup
-        nmol.ob.add_hydrogens
         ncarbon = nmol.atom(carbon.id)
         noxygen = nmol.atom(oxygen.id)
         nmol.delete_bond(ncarbon, noxygen)
-        ncarbon.charge += 1
-        noxygen.charge -= 1
         ncarbon.remove_an_h!
-        #p ncarbon.ob.implicit_hydrogen_count
-        #p ncarbon
-        #ncarbon.ob.decrement_implicit_valence
-        #p ncarbon.ob.implicit_hydrogen_count
-        #p ncarbon
-        #ncarbon.ob.increment_implicit_valence
-
-        nmol.title = nmol.to_s
-        p nmol.write("tmp.svg")
-        parts = nmol.split
-        p z=parts.first
-        p z.formula
-        p z.mass
-        p z.exact_mass
-        
-        puts "HIAY"
+        #noxygen.ob.set_spin_multiplicity  1
+        noxygen.spin = 1
+        noxygen.charge = -1
+        nmol.split
       end
 
       # an empty array is returned if there are no fragments generated.
@@ -225,11 +210,19 @@ module Rubabel
             end
           end
         end
-        if opts[:rules].any? {|r| [:oxed_ether].include?(r) }
-          self.each_match("C[O&X2]", only_uniqs) do |carbon, oxygen|
+        if opts[:rules].any? {|r| [:oxe].include?(r) }
+          self.each_match("C-O", only_uniqs) do |carbon, oxygen|
             fragment_sets << carbon_oxygen_esteal(carbon, oxygen)
           end
         end
+        if opts[:rules].any? {|r| [:oxe_phde].include?(r) }
+          self.each_match("P-O-C", only_uniqs) do |phosphate, oxygen, carbon|
+            frag_set = carbon_oxygen_esteal(phosphate, oxygen)
+            frag_set.map! &:convert_dative_bonds!
+            fragment_sets << frag_set
+          end
+        end
+
 
         unless had_hydrogens
           fragment_sets.each {|set| set.each(&:remove_h!) }

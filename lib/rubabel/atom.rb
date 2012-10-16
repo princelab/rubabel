@@ -246,6 +246,10 @@ module Rubabel
       @ob.get_spin_multiplicity
     end
 
+    def spin=(val)
+      @ob.set_spin_multiplicity(val)
+    end
+
     def type
       @ob.get_type
     end
