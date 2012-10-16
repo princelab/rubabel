@@ -120,7 +120,7 @@ Have some bonds to break?, split makes new molecules split from that bond(s)
     bonds = mol.matches("CO").map {|c, o| c.get_bond(o) }
     mol.split(*bonds)  # splits between every carbon single bonded to oxygen
 
-### Add & Delete atoms/bonds
+### Add, delete, modify atoms/bonds
 
 #### Adding
 
@@ -146,6 +146,16 @@ Have some bonds to break?, split makes new molecules split from that bond(s)
     # delete a bond:
     bond = mol[0].get_bond(mol[1])
     mol.delete(bond)  # ->  #<Mol C.O>
+
+#### Modifying
+
+Can add or subtract from bonds to change bond order:
+
+    mol = Rubabel["CC"]
+    mol[0].get_bond(mol[1]) + 1   # now it is a double bond
+    bond = mol[0].bonds.first
+    bond - 1 
+    bond.bond_order   # => 1
 
 ## Installing
 

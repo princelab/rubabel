@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 require 'rubabel/atom'
 
 class OpenBabel::OBBond
@@ -88,7 +90,29 @@ module Rubabel
     end
 
     def inspect
-      "[#{atoms.map(&:inspect).join('-')}]"
+      bond_symbol = case bond_order
+      when 2 then '='
+      when 3 then '≡'
+      else 
+        '-'
+      end
+      "#{atoms.map(&:inspect).join(bond_symbol)}"
+    end
+
+    # returns self
+    def +(val)
+      # do we need to check the bounds here?
+      newval = @ob.get_bond_order + val
+      @ob.set_bond_order(newval)
+      self
+    end
+
+    # won't decrease below zero. returns self
+    def -(val)
+      newval = @ob.get_bond_order - val
+      newval = 0 if newval < 0
+      @ob.set_bond_order(newval)
+      self
     end
 
   end

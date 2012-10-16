@@ -15,7 +15,7 @@ module Rubabel
       #  :sp3c_oxygen_double_bond_water_loss, :sp3c_oxygen_double_bond_far_side_sp2, :sp3c_oxygen_double_bond_far_side_sp3, :sp3c_oxygen_asymmetric_far_sp3
       #]
 
-      RULES = Set[:cad_o, :cad_oo, :oxe, :oxe_phde]
+      RULES = Set[:cad_o, :cad_oo, :oxe, :oxe_phde, :ohs]
 
       DEFAULT_OPTIONS = {
         rules: RULES,
@@ -91,25 +91,24 @@ module Rubabel
       end
 
       def near_side_double_bond_break(carbon, electrophile)
-        frag_sets = carbon.atoms.select {|atom| atom.type == "C3" }.map do |near_c3|
+        frag_sets = carbon.atoms.select {|atom| atom.carbon? && !atom.aromatic? && (atom.num_h > 0) }.map do |near_c3|
           frags = feint_double_bond(carbon.get_bond(near_c3)) do |_mol|
             frags = _mol.split(electrophile.get_bond(carbon))
-            frags.map(&:add_h!)
           end
         end
-        allowable_fragment_sets!(frag_sets)
+        #allowable_fragment_sets!(frag_sets)
       end
 
-      def alcohol_to_aldehyde(carbon, oxygen, carbon_nbrs)
-        # alcohol becomes a ketone and one R group is released
-        frag_sets = carbon_nbrs.select {|atom| atom.type == 'C3' }.map do |_atom|
-          frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
-            frags = _mol.split(carbon.get_bond(_atom))
-            frags.map(&:add_h!)
-          end
-        end
-        allowable_fragment_sets!(frag_sets)
-      end
+      #def alcohol_to_aldehyde(carbon, oxygen, carbon_nbrs)
+      #  # alcohol becomes a ketone and one R group is released
+      #  frag_sets = carbon_nbrs.select {|atom| atom.type == 'C3' }.map do |_atom|
+      #    frags = feint_double_bond(carbon.get_bond(oxygen)) do |_mol|
+      #      frags = _mol.split(carbon.get_bond(_atom))
+      #      frags.map(&:add_h!)
+      #    end
+      #  end
+      #  allowable_fragment_sets!(frag_sets)
+      #end
 
       def co2_loss(carbon, oxygen, c3_nbr)
         # carboxyl rules ...
@@ -184,6 +183,22 @@ module Rubabel
         nmol.split
       end
 
+      # returns the duplicated molecule and the equivalent atoms
+      def dup_molecule(atoms=[])
+        nmol = self.dup
+        [nmol, atoms.map {|old_atom| nmol.atom(old_atom.id) }]
+      end
+
+      # returns molecules created from splitting between the electrophile and
+      # the center and where the bond order is increased between the center
+      # and center_nbr
+      def break_with_double_bond(electrophile, center, center_nbr)
+        (nmol, (nele, ncarb, ncarb_nbr)) = self.dup_molecule([electrophile, center, center_nbr])
+        nmol.delete_bond(nele, ncarb)
+        ncarb_nbr.get_bond(ncarb) + 1
+        nmol.split
+      end
+
       # an empty array is returned if there are no fragments generated.
       # Hydrogens are added at a pH of 7.4, unless they have already been
       # added.
@@ -215,6 +230,14 @@ module Rubabel
             fragment_sets << carbon_oxygen_esteal(carbon, oxygen)
           end
         end
+        # right now implemented so that a beta hydrogen has to be availabe for
+        # extraction
+        if opts[:rules].any? {|r| [:ohs].include?(r) }
+          self.each_match("C[C,O]-O", only_uniqs) do |beta_c, center, oxygen|
+            next unless beta_c.ob.implicit_hydrogen_count > 0
+            fragment_sets << break_with_double_bond(oxygen, center, beta_c)
+          end
+        end
         if opts[:rules].any? {|r| [:oxe_phde].include?(r) }
           self.each_match("P-O-C", only_uniqs) do |phosphate, oxygen, carbon|
             frag_set = carbon_oxygen_esteal(phosphate, oxygen)
@@ -222,8 +245,7 @@ module Rubabel
             fragment_sets << frag_set
           end
         end
-
-
+      
         unless had_hydrogens
           fragment_sets.each {|set| set.each(&:remove_h!) }
           self.remove_h!
@@ -231,7 +253,7 @@ module Rubabel
         if opts[:uniq]
           # TODO: impelent properly
           raise NotImplementedError
-          #fragment_sets = fragment_sets.uniq_by(&:csmiles) 
+          #fragment_sets = fragment_sets.uniq_by(&:csmiles)
         end
 
         fragment_sets

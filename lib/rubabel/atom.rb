@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 require 'matrix'
 require 'andand'
 
@@ -295,6 +297,13 @@ module Rubabel
     def hbond_acceptor?() @ob.is_hbond_acceptor end
     def hbond_donor?() @ob.is_hbond_donor end
     def hbond_donor_h?() @ob.is_hbond_donor_h end
+
+    # the total number of hydrogens bonded to the atom (implicit + explicit)
+    def hydrogen_count
+      @ob.implicit_hydrogen_count + @ob.explicit_hydrogen_count
+    end
+
+    alias_method :num_h, :hydrogen_count
 
     def double_bond?
       each_bond.any? {|bond| bond.bond_order == 2 }
