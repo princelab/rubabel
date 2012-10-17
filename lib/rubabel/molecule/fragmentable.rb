@@ -6,8 +6,8 @@ module Rubabel
   class Molecule
     module Fragmentable
 
-      RULES = Set[:cod, :codoo, :oxe, :oxepd, :oxh]
-      #RULES = Set[:cod, :codoo, :oxe, :oxepd, :oxh, :oxhpd]
+      #RULES = Set[:cod, :codoo, :oxe, :oxepd, :oxh]
+      RULES = Set[:cod, :codoo, :oxe, :oxepd, :oxh, :oxhpd]
 
       DEFAULT_OPTIONS = {
         rules: RULES,
@@ -118,13 +118,13 @@ module Rubabel
         # extraction
         if opts[:rules].any? {|r| [:oxh].include?(r) }
           self.each_match("C[C,O]-O", only_uniqs) do |beta_c, center, oxygen|
-            next unless beta_c.ob.implicit_hydrogen_count > 0
+            next unless beta_c.hydrogen_count > 0
             fragment_sets << break_with_double_bond(oxygen, center, beta_c)
           end
         end
         if opts[:rules].any? {|r| [:oxhpd].include?(r) }
           self.each_match("C-O-P-O", only_uniqs) do |carbon, alc_oxy, phosphate, beta_carb_oxy|
-            next unless beta_carb_oxy.ob.implicit_hydrogen_count > 0
+            next unless beta_carb_oxy.hydrogen_count > 0
             frag_set = break_with_double_bond(alc_oxy, phosphate, beta_carb_oxy)
             frag_set.map! &:convert_dative_bonds!
             fragment_sets << frag_set

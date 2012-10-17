@@ -171,10 +171,12 @@ describe Rubabel::Molecule::Fragmentable do
         end
       end
 
-      xspecify 'phosphodiester' do
+      specify 'phosphodiester (right now needs very low pH and NOT SURE WORKING PROPERLY)' do
         mol = Rubabel["CC(COP(=O)(O)OCCCN"]
+        mol.add_h!(1.0)
         frags = mol.fragment(rules: [:oxhpd])
-        p frags
+        frags = frags.flatten
+        frags.map(&:csmiles).should == ["CCCO", "[NH3+]CCCOP(=O)=O", "CCCOP(=O)=O", "OCCC[NH3+]"]
       end
     end
 
