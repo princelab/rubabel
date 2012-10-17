@@ -6,7 +6,7 @@ require 'rubabel/molecule/fragmentable'
 
 default_ph = 2.5
 
-Fragment = Struct.new(:id, :title, :mz, :mass, :charge, :smiles, :pairing)
+Fragment = Struct.new(:frag, :id, :title, :mz, :mass, :charge, :smiles, :pairing)
 
 parser = Trollop::Parser.new do
   banner "usage: #{File.basename($0)} [OPTIONS|RULES] <SMARTS> ..."
@@ -50,7 +50,7 @@ ARGV.each do |smiles|
       end
 
       frag.title = "#{i}-#{j}pair_" + (mz ? "#{mz}_mz" : "#{frag.mass.round(3)}_Mass")
-      frag_obj = Fragment.new(frag.title, frag.title, mz, frag.exact_mass, frag.charge, frag.csmiles, i)
+      frag_obj = Fragment.new(frag, frag.title, frag.title, mz, frag.exact_mass, frag.charge, frag.csmiles, i)
       frags << frag_obj
     end
   end
@@ -58,7 +58,7 @@ ARGV.each do |smiles|
   if options[:images]
     frags.each do |frag|
       fn = "#{frag.title}.png"
-      frag.write(fn)
+      frag.frag.write(fn)
     end
   end
   frags.each do |frag|
