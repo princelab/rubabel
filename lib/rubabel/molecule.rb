@@ -503,7 +503,13 @@ module Rubabel
     end
 
     # sensitive to add_h!
-    def num_atoms() @ob.num_atoms  end
+    def num_atoms(count_implied_hydrogens=false) 
+      if !count_implied_hydrogens
+        @ob.num_atoms  
+      else
+        @ob.num_atoms + reduce(0) {|cnt, atom| cnt + atom.ob.implicit_hydrogen_count }
+      end
+    end
     def num_bonds() @ob.num_bonds  end
     def num_hvy_atoms() @ob.num_hvy_atoms  end
     def num_residues() @ob.num_residues  end

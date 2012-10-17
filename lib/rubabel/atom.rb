@@ -186,7 +186,7 @@ module Rubabel
         end
       @ob.set_spin_multiplicity(new_spin)
       atoms.each do |atom|
-        if atom.atomic_num == 1
+        if atom.hydrogen?
           self.mol.delete_atom(atom)
           break
         end

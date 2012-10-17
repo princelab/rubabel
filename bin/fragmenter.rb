@@ -4,40 +4,54 @@ require 'trollop'
 require 'rubabel'
 require 'rubabel/molecule/fragmentable'
 
+default_ph = 2.5
 
 parser = Trollop::Parser.new do
   banner "usage: #{File.basename($0)} [OPTIONS|RULES] <SMARTS> ..."
   text "\noptions:"
-  opt :ph, "the pH to use (experimental option)", :default => Rubabel::Molecule::Fragmentable::DEFAULT_OPTIONS[:ph]
+  opt :ph, "the pH to use (experimental option)", :default => default_ph
+  opt :images, "print out svg images of fragments" 
   #opt :uniq, "no repeated fragments", :default => false
   text "\nrules:"
   Rubabel::Molecule::Fragmentable::RULES.each do |rule|
     opt rule, rule.to_s.gsub("_",' ')
   end
   text "\nexample:"
-  text "fragmenter.rb -aecsoxn 'CCC(=O)OCCC' 'CCC(=O)OCCC(=O)O'"
+  text "fragmenter.rb -xeh 'CCC(=O)OCCC' 'CCC(=O)OCCC(=O)O'"
 end
 
-rules = parser.parse(ARGV)
-options = {rules: []}
-options[:ph] = rules.delete(:ph)
-options[:uniq] = rules.delete(:uniq)
-rules.each do |k,v|
-  options[:rules] << k if v && k.to_s !~ /_given/
-end
+options = parser.parse(ARGV)
+opts = {rules: []}
+opts[:uniq] = options.delete(:uniq)
+ph = options.delete(:ph)
+opts[:rules] = Rubabel::Molecule::Fragmentable::RULES.map do |rule|
+  rule if options["#{rule}_given".to_sym]
+end.compact
 
 if ARGV.size == 0
   parser.educate && exit
 end
 
-ARGV.each do |mol|
-  mol = Rubabel[mol]
+ARGV.each do |smiles|
+  mol = Rubabel[smiles]
   puts "\nmolecule: #{mol.csmiles}"
-  fragment_sets = mol.fragment(options)
-  fragment_sets.each do |frag_set|
-    puts ""
-    frag_set.each do |frag|
-      puts "#{frag.mass.round(5)} #{frag.csmiles}"
+  mol.correct_for_ph!(ph)
+  puts "at ph #{ph}: #{mol.csmiles}"
+  fragment_sets = mol.fragment(opts)
+  puts %w(mass charge smiles pairing).join("\t")
+  fragment_sets.each_with_index do |frag_set,i|
+    frag_set.each_with_index do |frag,j|
+      if options[:images]
+        frag.title = 
+          if frag.charge == 0
+            'nocharge'
+          else
+            mz=(frag.mass / frag.charge).round(5).to_s
+          end
+        fn = "frag#{i}-#{j}_#{frag.title}.png"
+        frag.write(fn)
+      end
+      puts [frag.mass.round(5), frag.charge, frag.csmiles, i].join("\t")
     end
   end
 end

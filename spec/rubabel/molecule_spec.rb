@@ -88,6 +88,18 @@ describe Rubabel::Molecule do
     ar.size.should == 2
   end
 
+  specify 'num_atoms gives the number of atoms which can vary with hydrogens added' do
+    mol = Rubabel["CCC"]
+    mol.num_atoms.should == 3
+    mol.add_h!
+    mol.num_atoms.should == 11
+  end
+
+  specify 'num_atoms(true) gives the number including implied hydrogens' do
+    mol = Rubabel["CCC"]
+    mol.num_atoms(true).should == 11
+  end
+
   describe 'adding an atom' do
     it 'can be added but not attached' do
       mol = Rubabel["CCO"]
