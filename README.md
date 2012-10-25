@@ -12,6 +12,7 @@ The [Chemistry Toolkit Rosetta Wiki](http://ctr.wikia.com/wiki/Chemistry_Toolkit
 
 #### From a string
 
+```ruby
     require 'rubabel'
 
     # by default, reads in smiles strings
@@ -29,6 +30,7 @@ Find out all the formats Rubabel supports (hash is format key pointing to the de
 
     hash = Rubabel.in_formats
     hash = Rubabel.out_formats
+```
 
 #### From a file
 
