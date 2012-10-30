@@ -154,7 +154,7 @@ mol = Rubabel["OCC"]
 mol << 6 << 8    # #<Mol "OCCCO">
 mol << :c << :o  # same thing
 
-# add an ethyl group specifically to second carbon
+# add an ethyl group specifically to second atom (the first carbon)
 mol = Rubabel["OCC"]
 mol[1] << :c << :c
 
