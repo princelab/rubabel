@@ -108,6 +108,8 @@ module Rubabel
       end
     end
 
+    def add!(arg=6, attach_to=nil, bond_order=1)
+
     # returns the atom passed in or that was created.  arg is a pre-existing
     # atom, an atomic number or an element symbol (e.g. :c).  default is to
     # add carbon.

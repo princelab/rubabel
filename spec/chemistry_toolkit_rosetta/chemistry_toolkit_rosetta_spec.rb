@@ -25,7 +25,7 @@ end
 describe 'Chemistry Toolkit Rosetta Wiki' do
 
   def equivalent_pngs(png1, png2)
-    (png1.size - png2.size < 50) && (png1[0..100] == png2[0..100])
+    ((png1.size - png2.size) < 100) && (png1[0..70] == png2[0..70])
   end
 
   before(:each) do
@@ -238,8 +238,8 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
       # NOTE: use svg and convert to png to change image size
     end
     png_out = IO.read(@wiki_spec_dir + "/caffeine.png")
-    key_out = IO.read(@keydir + "/caffeine.frozen.png")
-    equivalent_pngs(png_out, key_out).should be_true
+    key_png = IO.read(@keydir + "/caffeine.frozen.png")
+    equivalent_pngs(png_out, key_png).should be_true
     File.unlink('caffeine.png')
   end
   #OR, using commandline
