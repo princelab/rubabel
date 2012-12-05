@@ -4,12 +4,6 @@ Ruby interface to the OpenBabel ruby bindings (or the openbabel gem).  The
 interface attempts to be a ruby-ish analogue of
 [pybel](http://openbabel.org/docs/current/UseTheLibrary/Python_PybelAPI.html).
 
-## See also
-
-* [Rubidium](http://rbtk.rubyforge.org/) (based on the Chemistry Development Kit)
-* [ChemRuby](https://github.com/ank/chemruby)
-* [Chemcaster Ruby API](https://github.com/metamolecular/chemcaster-ruby).
-
 ## Examples
 
 The [Chemistry Toolkit Rosetta Wiki](http://ctr.wikia.com/wiki/Chemistry_Toolkit_Rosetta_Wiki) has a lot of examples you can check out.
@@ -233,6 +227,12 @@ mkdir ~/tools
 cmake ../openbabel-2.3.1 -DRUBY_BINDINGS=ON -DCMAKE_INSTALL_PREFIX=~/tools/openbabel-rvmruby1.9.3
 make && make install
 ```
+## See also
+
+* [Rubidium](http://rbtk.rubyforge.org/) (based on the Chemistry Development Kit [jruby])
+* [ChemRuby](https://github.com/ank/chemruby) [standalone using MRI extensions]
+* [Chemcaster Ruby API](https://github.com/metamolecular/chemcaster-ruby)
+
 ## Copyright
 
 MIT License.  See LICENSE for further details.
