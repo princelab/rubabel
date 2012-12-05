@@ -1,8 +1,14 @@
 # rubabel
 
-Ruby interface to the openbabel ruby bindings (or the openbabel gem).  The
+Ruby interface to the OpenBabel ruby bindings (or the openbabel gem).  The
 interface attempts to be a ruby-ish analogue of
 [pybel](http://openbabel.org/docs/current/UseTheLibrary/Python_PybelAPI.html).
+
+## See also
+
+* [Rubidium](http://rbtk.rubyforge.org/) (based on the Chemistry Development Kit)
+* [ChemRuby](https://github.com/ank/chemruby)
+* [Chemcaster Ruby API](https://github.com/metamolecular/chemcaster-ruby).
 
 ## Examples
 
