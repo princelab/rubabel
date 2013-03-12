@@ -24,8 +24,12 @@ end
 
 describe 'Chemistry Toolkit Rosetta Wiki' do
 
-  def equivalent_pngs(png1, png2)
-    ((png1.size - png2.size) < 100) && (png1[0..70] == png2[0..70])
+  def pngs_are_about_same_size(png1, png2, delta=150)
+    (png1.size - png2.size < delta)
+  end
+
+  def pngs_have_same_header(png1, png2, check_length=60)
+     png1[0..check_length] == png2[0..check_length]
   end
 
   before(:each) do
@@ -238,8 +242,10 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
       # NOTE: use svg and convert to png to change image size
     end
     png_out = IO.read(@wiki_spec_dir + "/caffeine.png")
-    key_png = IO.read(@keydir + "/caffeine.frozen.png")
-    equivalent_pngs(png_out, key_png).should be_true
+    key_out = IO.read(@keydir + "/caffeine.frozen.png")
+    
+    pngs_are_about_same_size(png_out, key_out).should be_true
+    pngs_have_same_header(png_out, key_out).should be_true
     File.unlink('caffeine.png')
   end
   #OR, using commandline
@@ -258,7 +264,8 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     end
     png_out = IO.read(@wiki_spec_dir + "/3016_highlighted.rubabel.png")
     key_out = IO.read(@keydir + "/3016_highlighted.rubabel.frozen.png")
-    equivalent_pngs(png_out, key_out)
+    pngs_are_about_same_size(png_out, key_out).should be_true
+    pngs_have_same_header(png_out, key_out).should be_true
     File.unlink('3016_highlighted.rubabel.png')
   end
 
