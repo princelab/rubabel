@@ -129,7 +129,7 @@ module Rubabel
           arg
         else
           new_obatom = @ob.new_atom
-          arg = Rubabel::EL_TO_NUM[arg] if arg.is_a?(Symbol)
+          arg = Rubabel::ELEMENT_TO_NUM[arg] if arg.is_a?(Symbol)
           new_obatom.set_atomic_num(arg)
           Rubabel::Atom.new(new_obatom)
         end

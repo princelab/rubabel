@@ -77,14 +77,14 @@ describe Rubabel::Molecule do
 
   specify '#[] retrieves atom by index' do
     mol = Rubabel["NCO"]
-    mol[0].el.should == :n
-    mol[1].el.should == :c
-    mol[2].el.should == :o
-    mol[-1].el.should == :o
-    mol[-2].el.should == :c
+    mol[0].el.should == :N
+    mol[1].el.should == :C
+    mol[2].el.should == :O
+    mol[-1].el.should == :O
+    mol[-2].el.should == :C
     ar = mol[1..-1]
-    ar.first.el.should == :c
-    ar.last.el.should == :o
+    ar.first.el.should == :C
+    ar.last.el.should == :O
     ar.size.should == 2
   end
 
@@ -103,10 +103,10 @@ describe Rubabel::Molecule do
   describe 'adding an atom' do
     it 'can be added but not attached' do
       mol = Rubabel["CCO"]
-      atom = mol.add_atom!(:n)
-      atom.el.should == :n
+      atom = mol.add_atom!(:N)
+      atom.el.should == :N
       atom = mol.add_atom!(8)
-      atom.el.should == :o
+      atom.el.should == :O
       mol.csmiles.should == "CCO.N.O"
     end
 
@@ -125,7 +125,7 @@ describe Rubabel::Molecule do
   specify '#<< adds atom to the last atom and returns the mol' do
     mol = Rubabel::Molecule.new
     # by element symbol or atomic number
-    reply = (mol << :n << :c)
+    reply = (mol << :N << :C)
     reply.should be_a(Rubabel::Molecule)
     reply.csmiles.should == 'CN'
   end
@@ -151,7 +151,7 @@ describe Rubabel::Molecule do
 
   specify '#atom(id) retrieves atom by id num' do
     mol = Rubabel["CCO"]
-    o = mol.find {|a| a.el == :o }
+    o = mol.find {|a| a.el == :O }
     mol.atom(o.id).id.should == o.id
   end
 
@@ -160,7 +160,7 @@ describe Rubabel::Molecule do
     carboxy_carbon = mol.atoms.find {|atom| atom.type == 'Cac' }
     single_bonded_oxygen = mol.atoms.find {|atom| atom.type == 'O.co2' && atom.get_bond(carboxy_carbon).bond_order == 1 }
     nit_carbon = mol.atoms.find {|atom| atom.atoms.any? {|nbr| nbr.type == 'N3' } }
-    nitrogen = mol.atoms.find {|atom| atom.el == :n }
+    nitrogen = mol.atoms.find {|atom| atom.el == :N }
     swapped = mol.swap!(nit_carbon, nitrogen, carboxy_carbon, single_bonded_oxygen)
     swapped.should == mol
     swapped.csmiles.should == 'NC(=O)CO'
@@ -315,7 +315,7 @@ describe Rubabel::Molecule do
   describe 'breaking a molecule' do
     before(:each) do
       @mol =  Rubabel::Molecule.from_string("NC(=O)CO")
-      @n = @mol.find {|a| a.el == :n }
+      @n = @mol.find {|a| a.el == :N }
     end
 
     it 'num_atoms, atoms and each_atom are sensitive to #add_h!' do

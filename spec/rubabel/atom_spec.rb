@@ -7,13 +7,13 @@ describe Rubabel::Atom do
 
   xit 'can be created given an element symbol' do
     hydrogen = Rubabel::Atom[:h]
-    hydrogen.el.should == :h
+    hydrogen.el.should == :H
 
     carbon = Rubabel::Atom[:c]
-    carbon.el.should == :c
+    carbon.el.should == :C
 
     chlorine = Rubabel::Atom[:cl, 3]
-    chlorine.el.should == :cl
+    chlorine.el.should == :Cl
     chlorine.id.should == 3
   end
 

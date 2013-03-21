@@ -113,18 +113,27 @@ module Rubabel
 end
 
 module Rubabel
-  # capitalized strings
-  ELEMENTS = %w(H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Uut Fl Uup Lv Uus Uuo)
+  # capitalized Symbols
+  ELEMENTS = %w(H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Uut Fl Uup Lv Uus Uuo).map(&:to_sym)
 
-  # atomic number to properly capitalized element abbreviation
+  # atomic number to properly capitalized element abbreviation (as Symbol)
   NUM_TO_ELEMENT = Hash[ ELEMENTS.each_with_index.map {|el,i| [i+1,el] } ]
+  # atomic number to properly capitalized element abbreviation (as Symbol)
 
-  # atomic number to lowercase symbol abbreviation
-  NUM_TO_EL = Hash[ ELEMENTS.each_with_index.map {|el,i| [i+1,el.downcase.to_sym] } ]
+  # the SMILES aromatic elements, listed in proper capitalized notation (e.g., :Se)
+  AROMATIC_ELEMENTS = [:C, :O, :S, :Se, :N]
+  # (http://esc.syrres.com/esc/docsmile.htm)
 
-  EL_TO_NUM = NUM_TO_EL.invert
+  # Along with properly capitalized element symbols (e.g., :Se) ELEMENT_TO_NUM
+  # will include keys to lowercase versions of the AROMATIC_ELEMENTS
   ELEMENT_TO_NUM = NUM_TO_ELEMENT.invert
+
+  AROMATIC_ELEMENTS.each do |el|
+    ELEMENT_TO_NUM[el.to_s.downcase.to_sym] = ELEMENT_TO_NUM[el]
+  end
 end
+
+
 
 =begin
 OBConversion conv;

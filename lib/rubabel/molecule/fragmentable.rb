@@ -31,7 +31,7 @@ module Rubabel
       # oxygen (e.g., an OH or a charge) to the carbon_nbr. Returns two new
       # molecules.
       def carbonyl_oxygen_dump(carbon, oxygen, carbon_nbr)
-        appendage = oxygen.atoms.find {|a| a.el != :c }
+        appendage = oxygen.atoms.find {|a| a.el != :C }
         if oxygen.charge != 0
           ocharge = oxygen.charge
         end
@@ -104,7 +104,7 @@ module Rubabel
 
         if opts[:rules].any? {|r| [:cod, :codoo].include?(r) }
           self.each_match("C[O;h1,O]", only_uniqs) do |carbon, oxygen|
-            carbon.atoms.select {|a| a.el == :c }.each do |carbon_nbr|
+            carbon.atoms.select {|a| a.el == :C }.each do |carbon_nbr|
               fragment_sets << carbonyl_oxygen_dump(carbon, oxygen, carbon_nbr)
             end
           end

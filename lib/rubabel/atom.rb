@@ -67,15 +67,11 @@ module Rubabel
       @ob.get_idx
     end
 
-    # abbreviated name, all lowercase as a Symbol
-    def el
-      NUM_TO_EL[atomic_num]
-    end
-
-    # abbreviated name, properly capitalized and as a String
+    # elemental symbol, properly capitalized and returned as a Symbol
     def element
       NUM_TO_ELEMENT[atomic_num]
     end
+    alias_method :el, :element
 
     # creates a bond and adds it to both atoms.  Returns the passed in or
     # newly created atom.
@@ -319,7 +315,7 @@ module Rubabel
 
     def carbonyl_oxygen?
       ats = atoms
-      ats.size == 1 && ats.first.el == :c && double_bond?
+      ats.size == 1 && ats.first.el == :C && double_bond?
     end
 
     def carbonyl_carbon?
