@@ -73,14 +73,17 @@ module Rubabel
     end
     alias_method :el, :element
 
-    # creates a bond and adds it to both atoms.  Returns the passed in or
-    # newly created atom.
-    def add_atom!(arg, bond_order=1)
-      unless arg.is_a?(Rubabel::Atom)
-        arg = mol.add_atom!(arg)
-      end
-      @ob.get_parent.add_bond(self.ob.get_idx, arg.ob.get_idx, bond_order)
-      arg
+    # connects the atom-like specifier to this atom through Molecule#add_atom!
+    # returns the atom that was just added for chaining.  Takes any argument
+    # that Molecule#add_atom! will take.
+    def bond!(arg, bond_order=1)
+      mol.add_atom!(arg, bond_order, self)
+    end
+    alias_method :<<, :bond!
+
+    # connects a Rubabel::Atom object with a bond
+    def connect!(atom, bond_order=1)
+      @ob.get_parent.add_bond(@ob.get_idx, atom.ob.get_idx, bond_order)
     end
 
     def each_bond(&block)

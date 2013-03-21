@@ -108,24 +108,38 @@ module Rubabel
       end
     end
 
+    # arg may be a Fixnum, a Symbol (Elemental symbol that is a Symbol), or a
+    # Rubabel::Atom.  Returns the newly associated/created atom.
+    def associate_atom!(arg)
+      if arg.is_a?(Rubabel::Atom)
+        @ob.add_atom(arg.ob)
+        arg
+      else
+        (num, is_aromatic) = 
+          if arg.is_a?(Symbol)
+            [Rubabel::ELEMENT_TO_NUM[arg], (arg.to_s.capitalize != arg.to_s)]
+          else
+            [arg, false]
+          end
+
+        new_obatom = @ob.new_atom
+        new_obatom.set_atomic_num(num)
+        Rubabel::Atom.new(new_obatom)
+      end
+    end
+
+
     # returns the atom passed in or that was created.  arg is a pre-existing
     # atom, an atomic number or an element symbol (e.g. :c).  default is to
     # add carbon.
-    def add_atom!(arg=6, attach_to=nil, bond_order=1)
-      if attach_to
-        attach_to.add_atom!(arg, bond_order)
-      else
-        if arg.is_a?(Rubabel::Atom)
-          @ob.add_atom(arg.ob)
-          arg
-        else
-          new_obatom = @ob.new_atom
-          arg = Rubabel::ELEMENT_TO_NUM[arg] if arg.is_a?(Symbol)
-          new_obatom.set_atomic_num(arg)
-          Rubabel::Atom.new(new_obatom)
-        end
-      end
+    def add_atom!(arg=6, bond_order=1, attach_to=nil)
+      attach_to ||= atoms.last
+      atom = associate_atom!(arg)
+      add_bond!(attach_to, atom, bond_order) if attach_to
+      atom
     end
+
+    alias_method :<<, :add_atom!
 
     # retrieves the atom by index (accepts everything an array would)
     def [](*args)

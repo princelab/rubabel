@@ -314,7 +314,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
       mol.matches(smarts).each do |atom1, atom2|
         mol.delete(atom1.get_bond(atom2))
         [atom1, atom2].each do |old_a|
-          mol.add_bond!(old_a, mol.add_atom!(0))
+          mol.add_atom!(0, 1, old_a)
         end
       end
       puts "#{mol.to_s.gsub('.',"\n")}"
