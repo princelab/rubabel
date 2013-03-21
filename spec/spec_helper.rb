@@ -5,14 +5,14 @@ require 'rspec/core/formatters/progress_formatter'
 # doesn't say so much about pending guys
 class QuietPendingFormatter < RSpec::Core::Formatters::ProgressFormatter
   def example_pending(example)
-    output.print yellow('*')
+    output.print pending_color('*')
   end
 end
 
 require 'rspec/core/formatters/documentation_formatter'
 class QuietPendingDocFormatter < RSpec::Core::Formatters::DocumentationFormatter
   def example_pending(example)
-    output.puts yellow( "<pending>: #{example.execution_result[:pending_message]}" )
+    output.puts pending_color( "<pending>: #{example.execution_result[:pending_message]}" )
   end
 end
 

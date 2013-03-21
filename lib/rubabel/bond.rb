@@ -59,11 +59,13 @@ module Rubabel
     def bond_order
       @ob.get_bond_order
     end
+    alias_method :order, :bond_order
 
     # 1 = single, 2 = double, 5 = aromatic
     def bond_order=(val=1)
       @ob.set_bond_order(val)
     end
+    alias_method :order=, :bond_order=
 
     # returns self
     def set_atoms!(beg_atom, end_atom)
@@ -99,20 +101,31 @@ module Rubabel
       "#{atoms.map(&:inspect).join(bond_symbol)}"
     end
 
-    # returns self
+    # Increases the bond order and returns a new Rubabel::Bond object--but it
+    # will still be pointing to the same underlying @ob object.
     def +(val)
-      # do we need to check the bounds here?
+      inc!(val)
+      @ob.upcast
+    end
+
+    # increase the bond order by val
+    def inc!(val=1)
       newval = @ob.get_bond_order + val
+      newval = 0 if newval < 0
       @ob.set_bond_order(newval)
       self
     end
 
-    # won't decrease below zero. returns self
+    # decrease the bond order by val
+    def dec!(val=1)
+      inc!(-val)
+    end
+
+    # Decreases the bond order and returns a new Rubabel::Bond object--but it
+    # will still be pointing to the same underlying @ob object.  Won't
+    # decrease below zero.
     def -(val)
-      newval = @ob.get_bond_order - val
-      newval = 0 if newval < 0
-      @ob.set_bond_order(newval)
-      self
+      self.+(-val)
     end
 
   end

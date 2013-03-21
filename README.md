@@ -2,7 +2,7 @@
 
 Ruby interface to the OpenBabel ruby bindings (or the openbabel gem).  The
 interface attempts to be a ruby-ish analogue of
-[pybel](http://openbabel.org/docs/current/UseTheLibrary/Python_PybelAPI.html).
+[pybel](http://openbabel.org/docs/current/UseTheLibrary/Python_PybelAPI.html).  Works with ruby 1.9 and 2.0.
 
 ## Examples
 
@@ -127,8 +127,8 @@ string or object and optional boolean specifying uniqueness of results):
 mol = Rubabel["NCC(O)C(=O)O"]
 mol.each_match("CO") do |match|
   # match is just an array of atoms that matched
-  match.first.el # => :c
-  match.last.el # => :o
+  match.first.el # => :C
+  match.last.el # => :O
 end
 
 # matches returns all the matches in an array
@@ -150,17 +150,17 @@ mol.split(*bonds)  # splits between every carbon single bonded to oxygen
 
 ```ruby
 mol = Rubabel["OCC"]
-# adds a carbon, then an oxygen to last indexed atom by atomic number
+# adds a carbon, then an oxygen to the previous carbon
 mol << 6 << 8    # #<Mol "OCCCO">
-mol << :c << :o  # same thing
+mol << :C << :O  # same thing
 
 # add an ethyl group specifically to second atom (the first carbon)
 mol = Rubabel["OCC"]
-mol[1] << :c << :c
+mol[1] << :C << :C
 
 # add a vinyl group to second carbon (use method notation and parenthesis 
 # because we are going to specify 2 arguments (the bond order):
-( mol[1] << :c).<<(:c, 2)
+( mol[1] << :C).<<(:C, 2)
 ```
 
 #### Deleting
@@ -168,23 +168,28 @@ mol[1] << :c << :c
 ```ruby
 # delete an atom:
 mol = Rubabel["NCO"]
-mol.delete(mol[0])  # -> #<Mol CO>
+mol.delete(mol[0])  
+# mol.to_s -> #<Mol CO>
 
 # delete a bond:
 bond = mol[0].get_bond(mol[1])
-mol.delete(bond)  # ->  #<Mol C.O>
+mol.delete(bond)  
+# mol.to_s ->  #<Mol C.O>
 ```
 
 #### Modifying
 
-Can add or subtract from bonds to change bond order:
+Can easily change the bond order:
 
 ```ruby
 mol = Rubabel["CC"]
-mol[0].get_bond(mol[1]) + 1   # now it is a double bond
-bond = mol[0].bonds.first
-bond - 1 
-bond.bond_order   # => 1
+bond = mol[0].get_bond(mol[1])  # get the bond you want
+bond = mol[0].bonds.first       # alternate way to get at bonds
+
+bond += 2    # now it is a triple bond
+bond.dec!    # now a double bond
+bond -= 1    # now a single bond
+bond.inc!(2) # back to a triple bond
 ```
 
 ## Installing
