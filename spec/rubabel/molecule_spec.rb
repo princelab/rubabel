@@ -113,7 +113,7 @@ describe Rubabel::Molecule do
     it "can be added and attached by el symbol or atomic number" do 
       mol = Rubabel["CCO"]
       first_carbon = mol[0]
-      mol.add_atom!(:n, first_carbon)
+      mol.add_atom!(:N, first_carbon)
       mol.csmiles.should == "NCCO"
 
       mol.add_atom!(16, first_carbon)
