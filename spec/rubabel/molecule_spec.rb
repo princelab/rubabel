@@ -22,10 +22,10 @@ describe Rubabel::Molecule do
   end
 
   #xit 'can add a hydrogen to the formula' do
-    #mol = Rubabel["CCC"]
-    #p mol.formula
-    #mol.add_hydrogen_to_formula!
-    #p mol.formula
+  #mol = Rubabel["CCC"]
+  #p mol.formula
+  #mol.add_hydrogen_to_formula!
+  #p mol.formula
   #end
 
   describe 'png output' do
@@ -125,14 +125,19 @@ describe Rubabel::Molecule do
     end
 
   end
-  
-  specify '#<< adds atom to the last atom and returns the last atom' do
+
+  specify '#<< adds atom to the last atom and returns the added atom' do
     mol = Rubabel::Molecule.new
     reply = (mol << :N)
     # by element symbol or atomic number
     reply = (mol << :N << :C)
     reply.should be_a(Rubabel::Atom)
     reply.el.should == :C
+
+    # properly handles aromaticity
+    mol.atoms.last.aromatic?.should be_false
+    mol << :c # aromatic specifier in SMILES
+    mol.atoms.last.aromatic?.should be_true
   end
 
   specify '#dup duplicates the molecule' do

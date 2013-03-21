@@ -124,6 +124,7 @@ module Rubabel
 
         new_obatom = @ob.new_atom
         new_obatom.set_atomic_num(num)
+        new_obatom.set_aromatic if is_aromatic
         Rubabel::Atom.new(new_obatom)
       end
     end
