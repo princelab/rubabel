@@ -100,34 +100,39 @@ describe Rubabel::Molecule do
     mol.num_atoms(true).should == 11
   end
 
-  describe 'adding an atom' do
-    it 'can be added but not attached' do
+  describe 'adding or associating atoms' do
+
+    it 'can associate atoms with the molecule' do
       mol = Rubabel["CCO"]
-      atom = mol.add_atom!(:N)
-      atom.el.should == :N
-      atom = mol.add_atom!(8)
-      atom.el.should == :O
+      nitrogen = mol.associate_atom!(:N)
+      nitrogen.el.should == :N
+      oxygen = mol.associate_atom!(8)
+      oxygen.el.should == :O
       mol.csmiles.should == "CCO.N.O"
+
+      oxygen_aromatic = mol.associate_atom!(:O)
+      mol.csmiles.should == "CCO.N.O.O"
     end
 
-    it "can be added and attached by el symbol or atomic number" do 
+    it "can be added and attached by element symbol or atomic number" do 
       mol = Rubabel["CCO"]
       first_carbon = mol[0]
-      mol.add_atom!(:N, first_carbon)
+      mol.add_atom!(:N, 1, first_carbon)
       mol.csmiles.should == "NCCO"
 
-      mol.add_atom!(16, first_carbon)
+      mol.add_atom!(16, 1, first_carbon)
       mol.csmiles.should == "NC(CO)S"
     end
 
   end
   
-  specify '#<< adds atom to the last atom and returns the mol' do
+  specify '#<< adds atom to the last atom and returns the last atom' do
     mol = Rubabel::Molecule.new
+    reply = (mol << :N)
     # by element symbol or atomic number
     reply = (mol << :N << :C)
-    reply.should be_a(Rubabel::Molecule)
-    reply.csmiles.should == 'CN'
+    reply.should be_a(Rubabel::Atom)
+    reply.el.should == :C
   end
 
   specify '#dup duplicates the molecule' do
@@ -143,7 +148,7 @@ describe Rubabel::Molecule do
   describe '#add_bond! adds a bond (and updates atoms)' do
     specify 'given two atoms' do
       mol = Rubabel["CCO"]
-      atom = mol.add_atom!(0)
+      atom = mol.associate_atom!(0)
       mol.add_bond!(mol[1], atom)
       mol.csmiles.should == '*C(O)C'
     end

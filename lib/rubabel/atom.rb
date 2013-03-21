@@ -37,11 +37,6 @@ module Rubabel
       #end
     end
 
-    # adds an atom and returns the added atom (allows chaining)
-    def <<(atom, bond_order=1)
-      add_atom!(atom, bond_order)
-    end
-
     # returns the molecule that is parent of this atom
     def mol
       @ob.get_parent.andand.upcast

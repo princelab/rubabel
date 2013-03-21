@@ -504,18 +504,6 @@ module Rubabel
       Rubabel::MoleculeData.new(@ob)
     end
 
-    # adds the atom (takes atomic number, element symbol or preexisting atom)
-    # and returns self
-    def <<(arg, bond_order=1)
-      last_atom = atoms[-1]
-      if last_atom
-        last_atom.add_atom!(arg, bond_order)
-      else
-        add_atom!(arg)
-      end
-      self
-    end
-
     # sensitive to add_h!
     def num_atoms(count_implied_hydrogens=false) 
       if !count_implied_hydrogens
