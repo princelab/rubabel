@@ -23,7 +23,7 @@ interface attempts to be a ruby-ish analogue of pybel.}
   end
 
   [
-    ["rspec", "~> 2.8.0"], 
+    ["rspec", "~> 2.13.0"], 
     ["rdoc", "~> 3.12"], 
     ["jeweler", "~> 1.8.3"]
   ].each do |args|
