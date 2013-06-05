@@ -1,3 +1,4 @@
+require 'rubabel/version'
 require 'openbabel'
 require 'rubabel/molecule'
 
