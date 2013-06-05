@@ -6,11 +6,12 @@ require 'rubabel/version'
 Gem::Specification.new do |spec|
   spec.name          = "rubabel"
   spec.version       = Rubabel::VERSION
-  spec.authors       = ["John Prince"]
+  spec.authors       = ["John T. Prince"]
   spec.email         = ["jtprince@gmail.com"]
-  spec.description   = %q{TODO: Write a gem description}
-  spec.summary       = %q{TODO: Write a gem summary}
-  spec.homepage      = ""
+  spec.description   = %q{Ruby interface to the OpenBabel ruby bindings similar to pybel}
+  spec.summary       = %q{Ruby interface to the openbabel ruby bindings (or the openbabel gem).  The
+interface attempts to be a ruby-ish analogue of pybel.}
+  spec.homepage      = "http://github.com/princelab/rubabel"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
@@ -30,6 +31,7 @@ Gem::Specification.new do |spec|
     ["rspec", "~> 2.13.0"], 
     ["rdoc", "~> 3.12"], 
     ["jeweler", "~> 1.8.3"],
+    ["simplecov"],
     ["rake"]
   ].each do |args|
     spec.add_development_dependency(*args)
