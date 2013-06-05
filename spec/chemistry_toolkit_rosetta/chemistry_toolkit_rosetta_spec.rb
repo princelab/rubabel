@@ -28,8 +28,8 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     (png1.size - png2.size < delta)
   end
 
-  def pngs_have_same_header(png1, png2, check_length=60)
-     png1[0..check_length] == png2[0..check_length]
+  def pngs_have_same_header(png1, png2, check_length=18)
+     png1[0,check_length] == png2[0,check_length]
   end
 
   before(:each) do
@@ -269,7 +269,7 @@ describe 'Chemistry Toolkit Rosetta Wiki' do
     File.unlink('3016_highlighted.rubabel.png')
   end
 
-  xspecify 'Align the depiction using a fixed substructure' do
+  specify 'Align the depiction using a fixed substructure' do
     # http://ctr.wikia.com/wiki/Align_the_depiction_using_a_fixed_substructure
 		#TODO
 	end
