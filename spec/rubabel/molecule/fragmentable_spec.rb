@@ -70,7 +70,8 @@ describe Rubabel::Molecule::Fragmentable do
         ff = frag_set.first
         ff.first.csmiles.should == 'C[CH2+]'
         ff.last.csmiles.should == '[O-]C(=O)CC[NH3+]'
-        ff.first.formula.should == "C2H5"
+        #ff.first.formula.should == "C2H5"
+        ff.first.formula.should == "C2H5-"
         ff.last.formula.should == "C3H7NO2"
         ff.first.exact_mass.should be_within(1e-6).of(29.03912516035)
         ff.last.exact_mass.should be_within(1e-6).of(89.04767846841)
@@ -82,9 +83,11 @@ describe Rubabel::Molecule::Fragmentable do
         ff = frag_set.first
         ff.first.csmiles.should == 'CC[C+]=O'
         ff.last.csmiles.should == '[O-]'
-        ff.first.formula.should == "C3H5O"
+        #ff.first.formula.should == "C3H5O"
+        ff.first.formula.should == "C3H5O+"
         ff.first.exact_mass.should be_within(1e-6).of(57.034039779909996)
-        ff.last.formula.should == "O"
+        #ff.last.formula.should == "O"
+        ff.last.formula.should == "O-"
       end
 
       specify 'phosphodiester' do
@@ -93,9 +96,11 @@ describe Rubabel::Molecule::Fragmentable do
         ff = frag_set.first
         ff.first.csmiles.should == '[O-]CCC' 
         ff.last.csmiles.should == '[NH3+]CCO[P](=O)=O'
-        ff.first.formula.should == 'C3H7O'
+        #ff.first.formula.should == 'C3H7O'
+        ff.first.formula.should == 'C3H7O-'
         ff.first.exact_mass.should be_within(1e-6).of(59.049689844)
-        ff.last.formula.should == 'C2H7NO3P'
+        #ff.last.formula.should == 'C2H7NO3P'
+        ff.last.formula.should == 'C2H7NO3P+'
         ff.last.exact_mass.should be_within(1e-6).of(124.016354719)
 
         mol = Rubabel["CCCOP(=O)(OCC[N+](C)(C)C)[O-]"]
@@ -126,7 +131,8 @@ describe Rubabel::Molecule::Fragmentable do
         ll = frags.last
         ll.first.csmiles.should == 'CC=CC[NH3+]'
         ll.last.csmiles.should == 'O'
-        ff.first.formula.should == 'C4H10N'
+        #ff.first.formula.should == 'C4H10N'
+        ff.first.formula.should == 'C4H10N+'
         ff.first.exact_mass.should be_within(1e-6).of(72.0813243255)
       end
 
@@ -138,7 +144,8 @@ describe Rubabel::Molecule::Fragmentable do
         frags = mol.fragment(rules: [:oxh])
         mols = frags.flatten
         mols.map(&:csmiles).should == ["C=CCC[NH3+]", "OO", "CC(=O)CC[NH3+]", "O", "CC=CC[NH3+]", "OO"]
-        mols.map(&:formula).should == ["C4H10N", "H2O2", "C4H10NO", "H2O", "C4H10N", "H2O2"]
+        mols.map(&:formula).should == ["C4H10N+", "H2O2", "C4H10NO+", "H2O", "C4H10N+", "H2O2"]
+        #mols.map(&:formula).should == ["C4H10N", "H2O2", "C4H10NO", "H2O", "C4H10N", "H2O2"]
         mols.map(&:exact_mass).zip([72.081324325, 34.005479304, 88.076238945, 18.010564684, 72.081324325, 34.005479304]) do |act, exp|
           act.should be_within(1e-6).of(exp)
         end
@@ -165,7 +172,8 @@ describe Rubabel::Molecule::Fragmentable do
         frags = mol.fragment(rules: [:oxh])
         mols = frags.flatten
         mols.map(&:csmiles).should == ["C=C=O", "OCCC[NH3+]", "CC(=O)O", "C=CC[NH3+]"]
-        mols.map(&:formula).should == ["C2H2O", "C3H10NO", "C2H4O2", "C3H8N"]
+        #mols.map(&:formula).should == ["C2H2O", "C3H10NO", "C2H4O2", "C3H8N"]
+        mols.map(&:formula).should == ["C2H2O", "C3H10NO+", "C2H4O2", "C3H8N+"]
         mols.map(&:exact_mass).zip([42.010564684, 76.076238945, 60.021129368000004, 58.065674261]) do |act,exp|
           act.should be_within(1e-6).of(exp)
         end

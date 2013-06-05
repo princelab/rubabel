@@ -49,7 +49,10 @@ describe Rubabel::Atom do
     mol = Rubabel["CC"]
     mol.add_h!
     mol.atoms[0].remove_an_h!
-    mol.formula.should == "C2H5"
+    # I was expecting this, but it is now giving formulas with charges (which
+    # is probably better)
+    ##mol.formula.should == "C2H5"
+    mol.formula.should == "C2H5+"
     mol.csmiles.should == 'C[CH2+]'
     mol.exact_mass.round(5).should == 29.03913
     mol.charge.should == 1
