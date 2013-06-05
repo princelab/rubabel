@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
     ["andand", "~> 1.3.3"],
     ["mini_magick", "~> 3.6.0"]
   ].each do |args|
-    gem.add_dependency(*args)
+    spec.add_dependency(*args)
   end
   [
     ["bundler", "~> 1.3"],
@@ -32,6 +32,6 @@ Gem::Specification.new do |spec|
     ["jeweler", "~> 1.8.3"],
     ["rake"]
   ].each do |args|
-    spec.add_development_dependency *args
+    spec.add_development_dependency(*args)
   end
 end
