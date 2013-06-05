@@ -56,13 +56,23 @@ module Rubabel
       # breaks the bond and gives the electrons to the oxygen
       def carbon_oxygen_esteal(carbon, oxygen)
         nmol = self.dup
+        puts "MOL"
+        p nmol
         ncarbon = nmol.atom(carbon.id)
         noxygen = nmol.atom(oxygen.id)
         nmol.delete_bond(ncarbon, noxygen)
+        puts "MOL AFTER:"
+        p nmol
         ncarbon.remove_an_h!
+        puts "nitrogen carbon: "
+        p ncarbon
         #noxygen.ob.set_spin_multiplicity  1
         noxygen.spin = 1
         noxygen.charge = -1
+        puts "NMOL:"
+        p nmol
+        puts "SPLITTING:"
+        #p nmol.split
         nmol.split
       end
 
