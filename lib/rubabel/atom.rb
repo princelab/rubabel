@@ -141,9 +141,10 @@ module Rubabel
     end
     alias_method :charge=, :formal_charge=
 
-    def heavy_valence
-      @ob.get_heavy_valence
-    end
+    # not recognizing get_heavy_valence right now for some reason
+    #def heavy_valence
+    #  @ob.get_heavy_valence
+    #end
 
     def hetero_valence
       @ob.get_hetero_valence
@@ -170,7 +171,7 @@ module Rubabel
       _obmol = @ob.get_parent
       had_hydrogens = _obmol.has_hydrogens_added
       _obmol.delete_hydrogens(self.ob) if had_hydrogens
-      reply = block.call
+      reply = block.call(had_hydrogens)
       _obmol.add_hydrogens(self.ob) if had_hydrogens
       reply
     end
@@ -180,48 +181,58 @@ module Rubabel
       _obmol = @ob.get_parent
       had_hydrogens = _obmol.has_hydrogens_added
       _obmol.add_hydrogens(self.ob) unless had_hydrogens
-      reply = block.call
+      reply = block.call(had_hydrogens)
       _obmol.delete_hydrogens(self.ob) unless had_hydrogens
       reply
     end
 
-    # permanently removes a proton by properly incrementing the
-    # spin_multiplicity (and deleting a hydrogen if one is explicitly attached
-    # to the atom).  If called with cnt=2 a carbene or nitrene can be made
-    # (giving a spin_multiplicity of 3).  Makes no effort to ensure that the
-    # proper number of hydrogens already exist to be deleted, just alters the
-    # spin_multiplicity and deletes the right number of hydrogens if they are
-    # available to be deleted.  Adds one charge to the atom.
-    def remove_a_proton!
-      #new_spin = 
-      #  case @ob.get_spin_multiplicity
-      #  when 0 then 2
-      #  when 2 then 3
-      #  end
-      #@ob.set_spin_multiplicity(new_spin)
-      #atoms.each do |atom|
-      #  if atom.hydrogen?
-      #    self.mol.delete_atom(atom)
-      #    break
-      #  end
-      #end
-      # add the charge
-      mol.do_without_hydrogens do
-        self.charge = charge - 1
-        p self.valence
-        #self.inc_valence!
-        self.valence += 1
-        p self.valence
+    def remove_a_proton!(add_placeholder_hydrogens=false)
+      remove_hydrogen!(0, add_placeholder_hydrogens)
+    end
+
+    def remove_hydrogen!(with_num_electrons=1, add_placeholder_hydrogens=false)
+      self.dec_implicit_valence!
+      case with_num_electrons
+      when 0
+        self.charge -= 1
+      when 1
+        raise NotImplementedError, "not doing free radicals just yet"
+      when 2
+        self.charge += 1
+      end
+      if @ob.explicit_hydrogen_count > 0
+        _obmol = @ob.get_parent
+        each do |atom|
+          if atom.hydrogen?
+            _obmol.delete_atom(atom.ob, false)
+            break
+          end
+        end
+      else
+        if add_placeholder_hydrogens
+          @ob.get_parent.add_hydrogens(@ob)
+        end
       end
       self
     end
 
-    def remove_a_hydride!
-      do_without_hydrogens do
-        self.inc_valence!
-        self.charge = charge + 1
-      end
-      self
+    # removes a proton with its electrons from an atom.
+    # This gives precisely the same molecule as if the molecule were input by
+    # smiles.  csmiles, formula, exact_mass, valence, implicit_valence, etc.
+    #
+    #     mol = Rubabel["CC"]
+    #     mol[1].remove_a_hydride!
+    #     mol == Rubabel["C[CH2+]"]  # in all characteristics
+    #
+    # Note, however, that with explicit hydrogens, the <b>partial charge</b>
+    # is not matching up, even though every other property seems to be.  I'm
+    # not sure why this is.
+    #
+    #     mol == Rubabel["C[CH2+]"].add_h!
+    #     mol[1].remove_a_hydride!
+    #     mol == Rubabel["C[CH2+]"].add_h!  # identical except in partial charge!
+    def remove_a_hydride!(add_placeholder_hydrogens=false)
+      remove_hydrogen!(2, add_placeholder_hydrogens)
     end
 
     # philosophy on equality: there are *so* many ways for two atoms to be
@@ -284,19 +295,29 @@ module Rubabel
       @ob.get_type
     end
 
+    # Returns the current number of explicit connections.  Don't confuse this for
+    # implicit_valence.
     def valence
       @ob.get_valence
     end
 
-    def valence=(val)
+    # maximum number of connections expected for this atom
+    def implicit_valence
+      @ob.get_implicit_valence
+    end
+
+    # set the maximum number of connections expected for this atom
+    def implicit_valence=(val)
       @ob.set_implicit_valence(val)
     end
 
-    def inc_valence!
+    # increase by one the maximum number of connections expected for this atom
+    def inc_implicit_valence!
       @ob.increment_implicit_valence
     end
 
-    def dec_valence!
+    # decrease by one the maximum number of connections expected for this atom
+    def dec_implicit_valence!
       @ob.decrement_implicit_valence
     end
 

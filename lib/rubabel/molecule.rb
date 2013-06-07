@@ -297,10 +297,12 @@ module Rubabel
     #    #alias_method :add_h!, :add_hydrogens!
 
     # returns self
-    def remove_h!
+    def delete_hydrogens!
       @ob.delete_hydrogens
       self
     end
+    alias_method :remove_h!, :delete_hydrogens!
+    alias_method :remove_hydrogens!, :delete_hydrogens!
 
     # returns just the smiles string :smi (not the id)
     def smiles

@@ -210,18 +210,6 @@ describe Rubabel::Molecule do
     ar.first.should be_a(OpenBabel::OBRing)
   end
 
-  describe 'making carbo-cations: spin_multiplicity and charges' do
-    # http://openbabel.org/docs/2.3.1/Features/Radicals.html
-    subject { mol = Rubabel["CC"] }
-    it 'can be turned into a carbocation' do
-      mol = subject
-      c = mol[0]
-      c.ob.set_spin_multiplicity 2
-      c.charge += 1
-      mol.csmiles.should == "C[CH2+]"
-    end
-  end
-
   describe 'masses' do
     subject { Rubabel["C(=O)COC(=O)C[NH3+]"] }
     it '#mol_wt (or #avg_mass)' do

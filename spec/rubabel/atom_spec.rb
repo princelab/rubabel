@@ -45,48 +45,124 @@ describe Rubabel::Atom do
     (mol.atoms[0].eql?(mol2.atoms[0])).should_not be_true
   end
 
-  it "removes protons with proper charge accounting (with implicity H's)" do
-    mol = Rubabel["CC"]
-    p mol.map(&:valence)
-    mol.atoms[1].remove_a_proton!
-    p mol
-    p mol.num_atoms
-    p mol.num_atoms(true)
-    p mol.map(&:valence)
-    mol.formula.should == "C2H5-"
-    mol.csmiles.should == '[CH2-]C'
-    mol.exact_mass.round(5).should == 29.03913
-    mol.charge.should == 1
+
+  describe 'removing protons and hydrides' do
+
+    def are_identical(obs, exp, atom_index)
+      [:formula, :csmiles, :charge, :exact_mass].each do |mol_prop|
+        exp_val = exp.send(mol_prop)
+        obs_val = obs.send(mol_prop)
+        exp_val.is_a?(Float) ? 
+          (obs_val.round(5).should == exp_val.round(5)) :
+          (obs_val.should == exp_val)
+      end
+      
+      [:formal_charge, :implicit_valence, :isotope, :spin, :valence, :partial_charge].each do |prop|
+        obs[atom_index].send(prop).should == exp.atoms[atom_index].send(prop)
+      end
+    end
+
+    context 'on a molecule with implicit hydrogens' do
+      subject { Rubabel["CC"] }
+
+      specify 'removing a hydride' do
+        subject[1].remove_a_hydride!
+        are_identical( subject, Rubabel["C[CH2+]"].remove_h!, 1)
+      end
+
+      specify 'removing a proton' do
+        subject[1].remove_a_proton!
+        are_identical( subject, Rubabel["C[CH2-]"].remove_h!, 1)
+      end
+    end
+
+    context 'on a molecule with explicit hydrogens' do
+      subject { Rubabel["CC"].add_h! }
+
+      specify 'removing a hydride' do
+        subject[1].remove_a_hydride!
+        are_identical( subject, Rubabel["C[CH2+]"].add_h!, 1)
+      end
+
+      specify 'removing a proton' do
+        subject[1].remove_a_proton!
+        are_identical( subject, Rubabel["C[CH2-]"].add_h!, 1)
+      end
+
+      # the :partial_charge is not matching up on these, not sure why!
+      specify 'the atom matches the partial_charge from atom made from smiles'
+    end
   end
 
-  xit "removes protons with proper charge accounting (with explicit H's)" do
-    mol = Rubabel["CC"]
-    mol.add_h!
-    mol.atoms[1].remove_a_proton!
-    mol.formula.should == "C2H5-"
-    mol.csmiles.should == '[CH2-]C'
-    mol.exact_mass.round(5).should == 29.03913
-    mol.charge.should == 1
-  end
 
-  xit "removes hydrides with proper charge accounting (with implicity H's)" do
-    mol = Rubabel["CC"]
-    mol.atoms[1].remove_a_hydride!
-    mol.formula.should == "C2H5-"
-    mol.csmiles.should == 'C[CH2-]'
-    mol.exact_mass.round(5).should == 29.03913
-    mol.charge.should == -1
-  end
+#  describe 'removing protons and hydrides' do
+#describe 'on molecule with implicit hydrogens' do
+#subject { Rubabel["CC"] }
 
-  xit "removes hydrides with proper charge accounting (with explicit H's)" do
-    mol = Rubabel["CC"]
-    mol.add_h!
-    mol.atoms[1].remove_a_hydride!
-    mol.formula.should == "C2H5-"
-    mol.csmiles.should == 'C[CH2-]'
-    mol.exact_mass.round(5).should == 29.03913
-    mol.charge.should == -1
-  end
+      #it 'behaves like an ethane carbanion' do
+        ##http://en.wikipedia.org/wiki/Carbanion
+        #ethane_carbanion = Rubabel["C[CH2-]"]
+        #ethane_carbanion.add_h! if subject.hydrogens_added?
+        #[:formula, :csmiles, :charge, :exact_mass].each do |mol_prop|
+          #ethane_carbanion.send(mol_prop).should == subject.send(mol_prop)
+        #end
+        #[:formal_charge, :implicit_valence, :isotope, :partial_charge, :spin, :valence].each do |prop|
+          #ethane_carbanion[1].send(prop).should == subject.atoms[altered_atom_idx].send(prop)
+        #end
+      #end
+    #end
+  #end
+
+    #xit "removes protons on molecule with implicit hydrogens" do
+      #mol = Rubabel["CC"]
+      #mol.atoms[1].remove_a_proton!
+      #include_examples "is ethane carbanion", mol
+    #end
+
+    #xit "removes protons on molecule with explicit H's" do
+      #mol = Rubabel["CC"]
+      #mol.add_h!
+      #mol.atoms[1].remove_a_proton!
+      #mol.formula.should == "C2H5-"
+      #mol.csmiles.should == '[CH2-]C'
+      #mol.exact_mass.round(5).should == 29.03913
+      #mol.charge.should == 1
+    #end
+  #end
+
+  #describe 'properly removing a hydride' do
+    #before do
+      #@ethane = Rubabel["CC"]
+    #end
+
+    #shared_examples "is ethenium" do |mol|
+      ## http://en.wikipedia.org/wiki/Ethenium
+      ## protonated ethylene
+      #ethenium = Rubabel["C[CH2+]"]
+      #ethenium.add_h! if mol.hydrogens_added?
+      #[:formula, :csmiles, :charge, :exact_mass].each do |mol_prop|
+        #ethenium.send(mol_prop).should == mol.send(mol_prop)
+      #end
+      #[:formal_charge, :implicit_valence, :isotope, :partial_charge, :spin, :valence].each do |prop|
+        #ethenium.send(prop).should == mol.send(prop)
+      #end
+    #end
+
+    #it "removes hydrides on molecule with implicit hydrogens" do
+      #@ethane.atoms[1].remove_a_hydride!
+      #include_examples "is ethenium", @ethane
+    #end
+
+    #xit "removes hydrides on molecule with explicit hydrogens" do
+      #@ethane = Rubabel["CC"]
+      #@ethane.add_h!
+      #@ethane.atoms[1].remove_a_hydride!
+      #@ethane.formula.should == "C2H5-"
+      #@ethane.csmiles.should == 'C[CH2-]'
+      #@ethane.exact_mass.round(5).should == 29.03913
+      #@ethane.charge.should == -1
+    #end
+  #end
 
 
 
