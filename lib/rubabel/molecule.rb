@@ -227,6 +227,25 @@ module Rubabel
     end
     alias_method :h_added?, :hydrogens_added?
 
+    # ensures that hydrogens are added before an operation, but returns the
+    # molecule to the original hydrogen or no hydrogen state when finished.
+    # returns whatever was returned by the block.
+    def do_with_hydrogens(ph=nil, polaronly=false, &block)
+      hydr_added = @ob.has_hydrogens_added
+      add_h!(ph, polaronly) unless hydr_added
+      reply = block.call
+      @ob.delete_hydrogens unless hydr_added
+      reply
+    end
+
+    def do_without_hydrogens(ph=nil, polaronly=false, &block)
+      hydr_added = @ob.has_hydrogens_added
+      @ob.delete_hydrogens if hydr_added
+      reply = block.call
+      add_h!(ph, polaronly) if hydr_added
+      reply
+    end
+
     # returns self.  Corrects for ph if ph is not nil.  NOTE: the reversal of
     # arguments from the OpenBabel api.
     def add_h!(ph=nil, polaronly=false)

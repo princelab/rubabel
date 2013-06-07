@@ -63,7 +63,7 @@ module Rubabel
         nmol.delete_bond(ncarbon, noxygen)
         puts "MOL AFTER:"
         p nmol
-        ncarbon.remove_an_h!
+        #ncarbon.remove_an_h!
         puts "nitrogen carbon: "
         p ncarbon
         #noxygen.ob.set_spin_multiplicity  1
@@ -150,7 +150,11 @@ module Rubabel
 
         case opts[:errors]
         when :remove
+          puts "Found #{fragment_sets.size} SETS!"
+          p fragment_sets
           fragment_sets.select! {|set| allowable_fragmentation?(set) }
+          puts "Only #{fragment_sets.size} SETS WERE ALLOWABLE!"
+          p fragment_sets
         when :fix
           raise NotImplementedError
         when :ignore  # do nothing

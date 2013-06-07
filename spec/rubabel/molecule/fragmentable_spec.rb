@@ -69,8 +69,11 @@ describe Rubabel::Molecule::Fragmentable do
 
       specify 'ester to ions' do
         mol = Rubabel["CCOC(=O)CCN"]
+        #frag_set = mol.fragment(rules: [:oxe], errors: :ignore)
         frag_set = mol.fragment(rules: [:oxe])
+        p frag_set.size
         ff = frag_set.first
+        puts "CHECKING" 
         p ff
         ff.first.csmiles.should == 'C[CH2+]'
         ff.last.csmiles.should == '[O-]C(=O)CC[NH3+]'

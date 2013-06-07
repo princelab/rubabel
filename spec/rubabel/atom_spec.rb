@@ -45,26 +45,50 @@ describe Rubabel::Atom do
     (mol.atoms[0].eql?(mol2.atoms[0])).should_not be_true
   end
 
-  it 'removes hydrogens with proper charge accounting' do
+  it "removes protons with proper charge accounting (with implicity H's)" do
     mol = Rubabel["CC"]
-    mol.add_h!
-    mol.atoms[0].remove_an_h!
-    # I was expecting this, but it is now giving formulas with charges (which
-    # is probably better)
-    ##mol.formula.should == "C2H5"
-    mol.formula.should == "C2H5+"
-    mol.csmiles.should == 'C[CH2+]'
+    p mol.map(&:valence)
+    mol.atoms[1].remove_a_proton!
+    p mol
+    p mol.num_atoms
+    p mol.num_atoms(true)
+    p mol.map(&:valence)
+    mol.formula.should == "C2H5-"
+    mol.csmiles.should == '[CH2-]C'
     mol.exact_mass.round(5).should == 29.03913
     mol.charge.should == 1
-
-    # can't seem to get working properly!!!
-    #mol.atoms[0].add_an_h!
-    #mol.formula.should == 'C2H6'
-    #mol.csmiles.should == 'CC'
-    #mol.charge.should == 0
-    ##fmol.atoms[0].charge -= 1
-    #mol.exact_mass.should == 323
   end
+
+  xit "removes protons with proper charge accounting (with explicit H's)" do
+    mol = Rubabel["CC"]
+    mol.add_h!
+    mol.atoms[1].remove_a_proton!
+    mol.formula.should == "C2H5-"
+    mol.csmiles.should == '[CH2-]C'
+    mol.exact_mass.round(5).should == 29.03913
+    mol.charge.should == 1
+  end
+
+  xit "removes hydrides with proper charge accounting (with implicity H's)" do
+    mol = Rubabel["CC"]
+    mol.atoms[1].remove_a_hydride!
+    mol.formula.should == "C2H5-"
+    mol.csmiles.should == 'C[CH2-]'
+    mol.exact_mass.round(5).should == 29.03913
+    mol.charge.should == -1
+  end
+
+  xit "removes hydrides with proper charge accounting (with explicit H's)" do
+    mol = Rubabel["CC"]
+    mol.add_h!
+    mol.atoms[1].remove_a_hydride!
+    mol.formula.should == "C2H5-"
+    mol.csmiles.should == 'C[CH2-]'
+    mol.exact_mass.round(5).should == 29.03913
+    mol.charge.should == -1
+  end
+
+
 
   it 'can find atom identities with simple questions' do
     mol = Rubabel["NCC(O)CC(=O)"]

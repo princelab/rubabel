@@ -165,28 +165,62 @@ module Rubabel
       @ob.get_partial_charge
     end
 
-    # permanently removes a hydrogen by properly incrementing the
+    # doesn't take into account pH (use Molecule#do_without_hydrogens)
+    def do_without_hydrogens(&block)
+      _obmol = @ob.get_parent
+      had_hydrogens = _obmol.has_hydrogens_added
+      _obmol.delete_hydrogens(self.ob) if had_hydrogens
+      reply = block.call
+      _obmol.add_hydrogens(self.ob) if had_hydrogens
+      reply
+    end
+
+    # doesn't take into account pH (use Molecule#do_with_hydrogens)
+    def do_with_hydrogens(&block)
+      _obmol = @ob.get_parent
+      had_hydrogens = _obmol.has_hydrogens_added
+      _obmol.add_hydrogens(self.ob) unless had_hydrogens
+      reply = block.call
+      _obmol.delete_hydrogens(self.ob) unless had_hydrogens
+      reply
+    end
+
+    # permanently removes a proton by properly incrementing the
     # spin_multiplicity (and deleting a hydrogen if one is explicitly attached
     # to the atom).  If called with cnt=2 a carbene or nitrene can be made
     # (giving a spin_multiplicity of 3).  Makes no effort to ensure that the
     # proper number of hydrogens already exist to be deleted, just alters the
     # spin_multiplicity and deletes the right number of hydrogens if they are
     # available to be deleted.  Adds one charge to the atom.
-    def remove_an_h!(add_charge=true)
-      new_spin = 
-        case @ob.get_spin_multiplicity
-        when 0 then 2
-        when 2 then 3
-        end
-      @ob.set_spin_multiplicity(new_spin)
-      atoms.each do |atom|
-        if atom.hydrogen?
-          self.mol.delete_atom(atom)
-          break
-        end
-      end
+    def remove_a_proton!
+      #new_spin = 
+      #  case @ob.get_spin_multiplicity
+      #  when 0 then 2
+      #  when 2 then 3
+      #  end
+      #@ob.set_spin_multiplicity(new_spin)
+      #atoms.each do |atom|
+      #  if atom.hydrogen?
+      #    self.mol.delete_atom(atom)
+      #    break
+      #  end
+      #end
       # add the charge
-      (self.charge = charge + 1) if add_charge
+      mol.do_without_hydrogens do
+        self.charge = charge - 1
+        p self.valence
+        #self.inc_valence!
+        self.valence += 1
+        p self.valence
+      end
+      self
+    end
+
+    def remove_a_hydride!
+      do_without_hydrogens do
+        self.inc_valence!
+        self.charge = charge + 1
+      end
       self
     end
 
@@ -252,6 +286,18 @@ module Rubabel
 
     def valence
       @ob.get_valence
+    end
+
+    def valence=(val)
+      @ob.set_implicit_valence(val)
+    end
+
+    def inc_valence!
+      @ob.increment_implicit_valence
+    end
+
+    def dec_valence!
+      @ob.decrement_implicit_valence
     end
 
     def vector
@@ -341,7 +387,6 @@ module Rubabel
         end
       end.compact.join(" ") << ">"
     end
-
 
   end
 end
