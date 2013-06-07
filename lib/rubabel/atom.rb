@@ -187,10 +187,10 @@ module Rubabel
     end
 
     def remove_a_proton!(add_placeholder_hydrogens=false)
-      remove_hydrogen!(0, add_placeholder_hydrogens)
+      remove_a_hydrogen!(0, add_placeholder_hydrogens)
     end
 
-    def remove_hydrogen!(with_num_electrons=1, add_placeholder_hydrogens=false)
+    def remove_a_hydrogen!(with_num_electrons=1, add_placeholder_hydrogens=false)
       self.dec_implicit_valence!
       case with_num_electrons
       when 0
@@ -232,7 +232,7 @@ module Rubabel
     #     mol[1].remove_a_hydride!
     #     mol == Rubabel["C[CH2+]"].add_h!  # identical except in partial charge!
     def remove_a_hydride!(add_placeholder_hydrogens=false)
-      remove_hydrogen!(2, add_placeholder_hydrogens)
+      remove_a_hydrogen!(2, add_placeholder_hydrogens)
     end
 
     # philosophy on equality: there are *so* many ways for two atoms to be
@@ -364,6 +364,13 @@ module Rubabel
       @ob.implicit_hydrogen_count + @ob.explicit_hydrogen_count
     end
 
+    def implicit_hydrogen_count
+      @ob.implicit_hydrogen_count
+    end
+
+    def explicit_hydrogen_count
+      @ob.explicit_hydrogen_count
+    end
     alias_method :num_h, :hydrogen_count
 
     def double_bond?

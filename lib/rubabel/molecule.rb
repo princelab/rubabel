@@ -692,22 +692,6 @@ module Rubabel
       end
       distance_matrix.max
     end
-
-    # adds 1 hydrogen to the formula and returns self
-    def add_hydrogen_to_formula!
-      string = @ob.get_formula
-      substituted = false
-      new_string = string.sub(/H(\d*)/) { substituted=true; "H#{$1.to_i+1}" }
-      unless substituted
-        new_string = string.sub("^(C?\d*)") { $1 + 'H' }
-      end
-      puts 'HERE'
-      p string
-      p new_string
-      #@ob.set_formula(new_string)
-      self
-    end
-
   end
 end
 

@@ -58,9 +58,12 @@ module Rubabel
         nmol = self.dup
         ncarbon = nmol.atom(carbon.id)
         noxygen = nmol.atom(oxygen.id)
+
+        is_carboxyl = noxygen.carboxyl_oxygen?
+        
         nmol.delete_bond(ncarbon, noxygen)
         ncarbon.remove_a_hydride!
-        noxygen.remove_a_proton!
+        noxygen.remove_a_proton! 
         nmol.split
       end
 
@@ -138,11 +141,7 @@ module Rubabel
 
         case opts[:errors]
         when :remove
-          puts "Found #{fragment_sets.size} SETS!"
-          p fragment_sets
           fragment_sets.select! {|set| allowable_fragmentation?(set) }
-          puts "Only #{fragment_sets.size} SETS WERE ALLOWABLE!"
-          p fragment_sets
         when :fix
           raise NotImplementedError
         when :ignore  # do nothing
