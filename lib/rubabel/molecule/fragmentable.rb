@@ -63,7 +63,7 @@ module Rubabel
         nmol.delete_bond(ncarbon, noxygen)
         puts "MOL AFTER:"
         p nmol
-        #ncarbon.remove_an_h!
+        ncarbon.remove_an_h!
         puts "nitrogen carbon: "
         p ncarbon
         #noxygen.ob.set_spin_multiplicity  1
