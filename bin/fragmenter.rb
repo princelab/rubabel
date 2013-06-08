@@ -57,7 +57,7 @@ ARGV.each do |smiles|
   frags = frags.sort_by {|frag| [-frag.charge, frag.mz] }
   if options[:images]
     frags.each do |frag|
-      fn = "#{frag.title}.png"
+      fn = "#{frag.title}.svg"
       frag.frag.write(fn)
     end
   end
