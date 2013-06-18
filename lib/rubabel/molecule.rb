@@ -2,7 +2,6 @@ require 'openbabel'
 require 'rubabel'
 require 'rubabel/atom'
 require 'rubabel/bond'
-require 'rubabel/molecule/fragmentable'
 require 'stringio'
 require 'mini_magick'
 
