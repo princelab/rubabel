@@ -4,6 +4,8 @@ Ruby interface to the OpenBabel ruby bindings (or the openbabel gem).  The
 interface attempts to be a ruby-ish analogue of
 [pybel](http://openbabel.org/docs/current/UseTheLibrary/Python_PybelAPI.html).  Works with ruby 1.9 and 2.0.
 
+**NOTE: Lipid fragmentation code has been moved to the [msplinter](https://github.com/princelab/msplinter).**
+
 ## Examples
 
 The [Chemistry Toolkit Rosetta Wiki](http://ctr.wikia.com/wiki/Chemistry_Toolkit_Rosetta_Wiki) has a lot of examples you can check out.
