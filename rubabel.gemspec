@@ -30,7 +30,6 @@ interface attempts to be a ruby-ish analogue of pybel.}
     ["bundler", "~> 1.3"],
     ["rspec", "~> 2.13.0"], 
     ["rdoc", "~> 3.12"], 
-    ["jeweler", "~> 1.8.3"],
     ["simplecov"],
     ["rake"]
   ].each do |args|
