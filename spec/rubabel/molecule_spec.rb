@@ -4,6 +4,12 @@ require 'rubabel/molecule'
 
 describe Rubabel::Molecule do
   describe 'creation' do
+    it 'can be made from scratch' do
+      mol = Rubabel::Molecule.new
+      mol.atoms.size == 0
+      mol.title.should == ''
+    end
+
     it 'can be made with Rubabel[]' do
       mol = Rubabel["CC(O)O"]
       mol.csmiles.should == "CC(O)O"
@@ -14,11 +20,45 @@ describe Rubabel::Molecule do
       mol_dup = Rubabel::Molecule.new(mol.ob)
     end
 
-    it 'can be made fresh' do
-      mol = Rubabel::Molecule.new
-      mol.atoms.size == 0
-      mol.title.should == ''
+    describe 'creation from different input strings' do
+      before(:all) do
+        @exp = Rubabel["CC(=O)O"]
+      end
+
+      # same as Rubabel::Molecule.from_string *args
+      specify 'smiles' do
+        Rubabel["CC(=O)O"].should == @exp
+      end
+
+      specify 'inchi' do
+        Rubabel["InChI=1S/C2H4O2/c1-2(3)4/h1H3,(H,3,4)", :inchi].should == @exp
+      end
+
+      specify 'inchi with no InChI= leader okay!' do
+        Rubabel["1S/C2H4O2/c1-2(3)4/h1H3,(H,3,4)", :inchi].should == @exp
+      end
+
+      describe 'creation with web lookup of ID or keys' do
+        before(:all) do
+          @exp = Rubabel["CC(=O)O"]
+        end
+
+        specify 'inchi key' do
+          Rubabel::Molecule.from_id( 'QTBSBXVTEAMEQO-UHFFFAOYSA-N', :inchikey ).should == @exp
+          Rubabel['QTBSBXVTEAMEQO-UHFFFAOYSA-N', :inchikey].should == @exp
+        end
+
+        specify 'lipidmaps id' do
+          Rubabel::Molecule.from_id( 'LMFA01010002', :lmid ).should == @exp
+          Rubabel['LMFA01010002', :lmid].should == @exp
+        end
+
+        specify 'pubchem id'
+
+      end
+
     end
+
   end
 
   #xit 'can add a hydrogen to the formula' do

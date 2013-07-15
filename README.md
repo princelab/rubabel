@@ -25,13 +25,14 @@ serine = Rubabel::Molecule.from_string("C(C(C(=O)O)N)O")
 # also any other format openbabel supports, for example inchi
 serine = Rubabel["InChI=1S/C3H7NO3/c4-2(1-5)3(6)7/h2,5H,1,4H2,(H,6,7)", :inchi]
 
-# from the internet:
-mol = Rubabel[some_molecule, Rubabel.format_from_mime(some_mime_type)]
+# from an InChI Key or other id (such as LipidMaps ID) [requires internet]
+serine = Rubabel["MTCFGRXMJLQNBG-REOHCLBHSA-N", :inchikey]
 
 Find out all the formats Rubabel supports (hash is format key pointing to the description):
 
 hash = Rubabel.in_formats
 hash = Rubabel.out_formats
+hash = Rubabel.id_formats # molecule retrieved by web-lookup
 ```
 
 #### From a file

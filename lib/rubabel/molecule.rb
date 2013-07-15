@@ -1,3 +1,5 @@
+require 'open-uri'
+require 'rexml/document'
 require 'openbabel'
 require 'rubabel'
 require 'rubabel/atom'
@@ -76,6 +78,12 @@ module Rubabel
     DEFAULT_FINGERPRINT = "FP2"
     DEFAULT_OUT_TYPE = :can
     DEFAULT_IN_TYPE = :smi
+    DEFAULT_ID_TYPE = :pubchem
+    ID_TYPES = {
+      inchikey: "InChI key",
+      lmid: "LipidMaps ID"
+    }
+    ID_TYPE_KEYS = ID_TYPES.keys
 
     # the OpenBabel::OBmol object
     attr_accessor :ob
@@ -92,12 +100,43 @@ module Rubabel
       end
 
       def from_string(string, type=DEFAULT_IN_TYPE)
+        if type == :inchi
+          string.prepend("InChI=") unless string[/^InChI=/]
+        end
         obmol = OpenBabel::OBMol.new
         obconv = OpenBabel::OBConversion.new
         obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
         obconv.read_string(obmol, string) || raise(ArgumentError, "invalid string" )
         self.new(obmol)
       end
+
+      def retrieve_info_from_url(url)
+        begin
+          info = open(url) {|io| io.read }
+        rescue => e
+          puts "Some kind of internet connectivity error. Check your connection!"
+          raise e
+        end
+        info
+      end
+
+      # requires an internet connection
+      def from_id(id, type=DEFAULT_ID_TYPE)
+          case type
+          when :inchikey
+            url = "http://www.chemspider.com/InChI.asmx/InChIKeyToInChI?inchi_key=" + URI::encode(id)
+            doc_string = retrieve_info_from_url(url)
+            doc = REXML::Document.new( doc_string )
+            inchi_string = doc.root.children.first.to_s
+            raise(ArgumentError, "did not retrieve a valid inchi string") unless inchi_string[/^InChI=/]
+            from_string(inchi_string, :inchi)
+          when :lmid # lipidmaps id
+            url = "http://www.lipidmaps.org/data/LMSDRecord.php?OutputType=SDF&Mode=File&LMID=" + id
+            doc_string = retrieve_info_from_url(url)
+            from_string(doc_string, :sdf)
+          end
+      end
+      alias_method :from_key, :from_id
 
       def from_atoms_and_bonds(atoms=[], bonds=[])
         obj = self.new( OpenBabel::OBMol.new )

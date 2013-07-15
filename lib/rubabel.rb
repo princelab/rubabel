@@ -25,8 +25,16 @@ module Rubabel
 
   class << self
 
+    # accepts a string specifying the molecule (calling Rubabel::Molecule.from_string) 
+    # or an id (calls Rubabel::Molecule.from_id)
     def [](string, type=Rubabel::Molecule::DEFAULT_IN_TYPE)
-      Rubabel::Molecule.from_string(string, type)
+      methd = 
+        if type && Rubabel::Molecule::ID_TYPE_KEYS.include?(type)
+          :from_id
+        else
+          :from_string
+        end
+      Rubabel::Molecule.send(methd, string, type)
     end
 
     def force_field(type=DEFAULT_FORCEFIELD)
@@ -43,6 +51,11 @@ module Rubabel
     # format
     def out_formats
       @out_formats ||= formats_to_hash(OpenBabel::OBConversion.new.get_supported_output_format)
+    end
+
+    # returns the formats retrievable by url lookup of the id or key
+    def id_formats
+      Rubabel::Molecule::ID_TYPES
     end
 
     # returns the format Symbol that can be used for conversion, or nil if
