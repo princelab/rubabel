@@ -207,6 +207,13 @@ On a POSIX system, make sure you have openbabel (including header files), cmake,
 sudo apt-get install openbabel libopenbabel-dev cmake make curl
 ```
 
+I also found that installing these additional libs were necessary on some
+machines (this is probably overkill, but I haven't whittled this down yet):
+
+```bash
+sudo apt-get install build-essential libwxgtk2.8-dev libwxbase2.8-dev libxml2-dev libxslt-dev libeigen2-dev libeigen3-dev libcairo-dev
+```
+
 Then install the gem (which should install the openbabel gem, too):
 
 ```bash
