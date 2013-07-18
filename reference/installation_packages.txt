@@ -1,0 +1,4 @@
+These packages were helpful (necessary??) to squelched warnings when installing from aa cleanly installed system.  libcairo-dev was what eventually worked, but these did squelch warnings!
+
+sudo apt-get install libwxgtk2.8-dev libwxbase2.8-dev libxml2-dev libxslt-dev libeigen2-dev libeigen3-dev
+

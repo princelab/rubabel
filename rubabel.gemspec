@@ -20,7 +20,7 @@ interface attempts to be a ruby-ish analogue of pybel.}
   spec.require_paths = ["lib"]
 
   [
-    ["openbabel", "~> 2.3.1.2"],
+    ["openbabel", "= 2.3.1.9"],
     ["andand", "~> 1.3.3"],
     ["mini_magick", "~> 3.6.0"]
   ].each do |args|

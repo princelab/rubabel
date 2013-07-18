@@ -201,23 +201,16 @@ First, many thanks to Andreas Maunz for packaging openbabel as a gem which makes
 
 ### Quick Install
 
-On a POSIX system, make sure you have openbabel (including header files), cmake, curl, tar, sed and make {see openbabel instructions}[https://github.com/amaunz/openbabel-gem].  On ubuntu/debian:
+On a POSIX system, make sure you have openbabel (including header files), cmake, curl, tar, sed and make {see openbabel instructions}[https://github.com/amaunz/openbabel-gem].  On a recent ubuntu/debian system, this should work
 
 ```bash
-sudo apt-get install openbabel libopenbabel-dev cmake make curl
-```
-
-I also found that installing these additional libs were necessary on some
-machines (this is probably overkill, but I haven't whittled this down yet):
-
-```bash
-sudo apt-get install build-essential libwxgtk2.8-dev libwxbase2.8-dev libxml2-dev libxslt-dev libeigen2-dev libeigen3-dev libcairo-dev
+sudo apt-get install ruby ruby-dev openbabel libopenbabel-dev cmake make curl build-essential libcairo-dev
 ```
 
 Then install the gem (which should install the openbabel gem, too):
 
 ```bash
-gem install rubabel
+sudo gem install rubabel
 ```
 
 ### Building from Source
