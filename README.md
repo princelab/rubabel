@@ -6,7 +6,7 @@ interface is ruby-ish analogue of
 
 ## Cite
 
-* Smith R, Williamson R, Ventura D, Prince JT. Rubabel: wrapping open Babel with Ruby. J Cheminform. 2013. 5(1):35. [pubmed](http://www.ncbi.nlm.nih.gov/pubmed/23883475) [open access article](http://www.jcheminf.com/content/5/1/35)
+* Smith R, Williamson R, Ventura D, Prince JT. Rubabel: wrapping open Babel with Ruby. J Cheminform. 2013. 5(1):35. [pubmed](http://www.ncbi.nlm.nih.gov/pubmed/23883475), [article](http://www.jcheminf.com/content/5/1/35) (open access)
 
 ## Examples
 
