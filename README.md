@@ -1,10 +1,12 @@
 # rubabel
 
 Ruby interface to the OpenBabel ruby bindings (or the openbabel gem).  The
-interface attempts to be a ruby-ish analogue of
-[pybel](http://openbabel.org/docs/current/UseTheLibrary/Python_PybelAPI.html).  Works with ruby 1.9 and 2.0.
+interface is ruby-ish analogue of
+[pybel](http://openbabel.org/docs/current/UseTheLibrary/Python_PybelAPI.html). 
 
-**NOTE: Lipid fragmentation code has been moved to the [msplinter](https://github.com/princelab/msplinter).**
+## Cite
+
+* Smith R, Williamson R, Ventura D, Prince JT. Rubabel: wrapping open Babel with Ruby. J Cheminform. 2013. 5(1):35. [pubmed](http://www.ncbi.nlm.nih.gov/pubmed/23883475) [open access article](http://www.jcheminf.com/content/5/1/35)
 
 ## Examples
 
@@ -197,7 +199,7 @@ bond.inc!(2) # back to a triple bond
 
 ## Installing
 
-First, many thanks to Andreas Maunz for packaging openbabel as a gem which makes this install quite painless.
+Should work with ruby 1.9 and 2.0.  Many thanks to Andreas Maunz for packaging openbabel as a gem which makes this install quite painless.
 
 ### Quick Install
 
