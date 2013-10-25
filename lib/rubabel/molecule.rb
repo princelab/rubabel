@@ -84,6 +84,21 @@ module Rubabel
       lmid: "LipidMaps ID"
     }
     ID_TYPE_KEYS = ID_TYPES.keys
+    ADDUCTS_LEGEND = {
+      lithium: "[Li+]",
+      sodium: "[Na+]",
+      ammonium: "[NH4+]",
+      potassium: "[K+]",
+      hydrogen: "[H+]",
+      #name: "[ion+]",
+      hydride: "[H-]",
+      hydroxide: "[0H-]",
+      chlorine: "[Cl-]",
+      bromine: "[Br-]" #,
+      #name2: "[ion-]"
+    }
+    ADDUCTS = {}
+    
 
     # the OpenBabel::OBmol object
     attr_accessor :ob
@@ -529,13 +544,34 @@ module Rubabel
     # splits the molecules at the given bonds and returns the fragments.  Does
     # not alter the caller.  If the molecule is already fragmented, then
     # returns the separate fragments.
-    def split(*bonds)
+    # ##!! Doesn't handle adducts, retained for backwards compatibility
+    def basic_split(*bonds)
+      
       if bonds.size > 0
         delete_and_restore_bonds(*bonds) do |mol|
           mol.ob.separate.map(&:upcast)
         end
       else
         self.ob.separate.map(&:upcast)
+      end
+    end
+
+    # splits the molecules at the given bonds and returns the fragments.  Does
+    # not alter the caller.  If the molecule is already fragmented, then
+    # returns the separate fragments.
+    def split(*bonds)
+      adducts unless @adducts
+      returns = []
+      if bonds.size > 0
+        delete_and_restore_bonds(*bonds) do |mol|
+          mols = mol.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
+          adduct_added = mols.product(@adducts).map {|a| Rubabel[a.join(".")] }
+          mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
+        end
+      else
+        mols = self.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
+        adduct_added = mols.product(@adducts).map {|a| Rubabel[a.join(".")] }
+        mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
       end
     end
 
@@ -730,6 +766,17 @@ module Rubabel
       end
       distance_matrix.max
     end
+    ADDUCTS_LEGEND.each_pair {|name,str| ADDUCTS[name] = from_string(str)}
+    def adducts
+      @adducts ||= []
+      splits = self.ob.separate.map(&:upcast).flatten.each {|mol| @adducts << mol if ADDUCTS.values.include?(mol) }
+      @adducts = @adducts.uniq(&:csmiles)
+    end
+    def adduct?
+      self.adducts unless @adducts
+      @adducts.size > 0
+    end
+    alias :adducts? :adduct?
   end
 end
 

@@ -396,6 +396,17 @@ describe Rubabel::Molecule do
       pieces.map(&:csmiles).sort.should == ["N", "OCC=O"]
     end
 
+    it 'can split properly in the presence of adducts' do 
+      mol = Rubabel::Molecule.from_string("NC(=O)C[O-].[Na+]")
+      n = mol.find {|a| a.el == :N }
+      mol.adducts.size.should == 1
+      mol.adduct?.should be_true
+      mol.delete_bond(n, n.atoms.first)
+      pieces = mol.basic_split
+      pieces.size.should == 2 # Or 4 as I move the adduct around?
+      pieces.map {|a| a.size.should == 2}
+    end
+
     it 'can iterate through fragments' do
       expected = %w(N OCC=O)
       @mol.delete_bond(@n, @n.atoms.first)
@@ -403,7 +414,6 @@ describe Rubabel::Molecule do
         frag.csmiles.should == expected.shift
       end
     end
-
   end
 
   describe 'matching patterns (SMARTS)' do
