@@ -546,7 +546,6 @@ module Rubabel
     # returns the separate fragments.
     # ##!! Doesn't handle adducts, retained for backwards compatibility
     def basic_split(*bonds)
-      
       if bonds.size > 0
         delete_and_restore_bonds(*bonds) do |mol|
           mol.ob.separate.map(&:upcast)
@@ -566,12 +565,12 @@ module Rubabel
         delete_and_restore_bonds(*bonds) do |mol|
           mols = mol.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
           adduct_added = mols.product(@adducts).map {|a| Rubabel[a.join(".")] }
-          mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
+          adduct_added.empty? ? mols : mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
         end
       else
         mols = self.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
         adduct_added = mols.product(@adducts).map {|a| Rubabel[a.join(".")] }
-        mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
+        adduct_added.empty? ? mols : mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
       end
     end
 

@@ -402,10 +402,11 @@ describe Rubabel::Molecule do
       mol.adducts.size.should == 1
       mol.adduct?.should be_true
       mol.delete_bond(n, n.atoms.first)
-      pieces = mol.basic_split
+      pieces = mol.split
       pieces.size.should == 2 # Or 4 as I move the adduct around?
       pieces.map {|a| a.size.should == 2}
     end
+    pending "splits properly in presence of adducts, no matter how many fragments or adducts" 
 
     it 'can iterate through fragments' do
       expected = %w(N OCC=O)
