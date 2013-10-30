@@ -1,5 +1,6 @@
 require 'spec_helper'
 
+require 'pry'
 require 'rubabel/molecule'
 
 describe Rubabel::Molecule do
@@ -395,8 +396,9 @@ describe Rubabel::Molecule do
       pieces = @mol.split
       pieces.map(&:csmiles).sort.should == ["N", "OCC=O"]
     end
+    describe "Adduct Cases:"
 
-    it 'can split properly in the presence of adducts' do 
+    it 'splits single break with a single adduct' do 
       mol = Rubabel::Molecule.from_string("NC(=O)C[O-].[Na+]")
       n = mol.find {|a| a.el == :N }
       mol.adducts.size.should == 1
@@ -406,7 +408,50 @@ describe Rubabel::Molecule do
       pieces.size.should == 2 # Or 4 as I move the adduct around?
       pieces.map {|a| a.size.should == 2}
     end
-    pending "splits properly in presence of adducts, no matter how many fragments or adducts" 
+    it 'splits single break with multiple adducts' do 
+      mol = Rubabel::Molecule.from_string("[K+].NC(=O)C[O-].[Na+]")
+      n = mol.find {|a| a.el == :N }
+      mol.adducts.size.should == 2
+      mol.adduct?.should be_true
+      mol.delete_bond(n, n.atoms.first)
+      pieces = mol.split
+      pieces.size.should == 3 # Or 4 as I move the adduct around?
+      pieces.map {|a| a.size.should == 2}
+    end
+    it 'splits multiple breaks and single adduct' do 
+      mol = Rubabel::Molecule.from_string("NC(=O)C[O-].[Na+]")
+      num_bonds_before = mol.num_bonds
+      num_atoms_before = mol.num_atoms
+      reply = mol.split(mol.bonds.first, mol.bonds.last)
+      
+      reply.should be_a(Array)
+      reply.size.should == 3
+      mol.num_bonds.should == num_bonds_before
+      mol.num_atoms.should == num_atoms_before
+      csmiles = reply.map {|a| a.map(&:csmiles) }.flatten
+      csmiles.sort.should == %w(N N.[Na+] CC=O CC=O.[Na+] O O.[Na+]).sort
+
+    end
+    it 'splits multiple breaks and multiple adducts' do 
+      pending "Do we need to handle multiple adducts?"
+    end
+    it 'handles the product arrays properly' do 
+      mol = Rubabel::Molecule.from_string("NC(=O)C[O-].[Na+]")
+      reply = mol.split(mol.bonds.first, mol.bonds.last)
+      adducts = mol.adducts
+      p adducts
+      mols = mol.ob.separate.map(&:upcast).delete_if {|a| adducts.include?(a)}
+      p mols
+      mols2 = mols.map(&:dup)
+      adducts.each do |adduct|
+        mols2.each {|mol| mol.associate_atom! adduct.atoms.first}
+      end
+      products = mols.product(mols2)
+      p products
+      p mol.formula
+      p products[1].map(&:formula)
+      p products[2].map(&:formula)
+    end
 
     it 'can iterate through fragments' do
       expected = %w(N OCC=O)

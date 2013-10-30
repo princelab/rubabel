@@ -545,7 +545,7 @@ module Rubabel
     # not alter the caller.  If the molecule is already fragmented, then
     # returns the separate fragments.
     # ##!! Doesn't handle adducts, retained for backwards compatibility
-    def basic_split(*bonds)
+    def split(*bonds)
       if bonds.size > 0
         delete_and_restore_bonds(*bonds) do |mol|
           mol.ob.separate.map(&:upcast)
@@ -558,7 +558,7 @@ module Rubabel
     # splits the molecules at the given bonds and returns the fragments.  Does
     # not alter the caller.  If the molecule is already fragmented, then
     # returns the separate fragments.
-    def split(*bonds)
+    def complex_split(*bonds)
       adducts unless @adducts
       returns = []
       if bonds.size > 0
@@ -569,8 +569,23 @@ module Rubabel
         end
       else
         mols = self.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
-        adduct_added = mols.product(@adducts).map {|a| Rubabel[a.join(".")] }
-        adduct_added.empty? ? mols : mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
+        mols2 = mols.map(&:dup)
+        adducts.each do |adduct|
+          mols2.each {|mol| mol.associate_atom! adduct.atoms.first }
+        end
+        products = mols.product(mols2)
+        selected_products = products.select do |a,b| 
+           test_mass = a.mass + b.mass 
+           p [a,b] if (test_mass - self.mass).abs > 0.01  
+          (self.mass-a.mass - b.mass).abs < 0.01  
+        end
+        p products
+        binding.pry
+        #puts "adduct_added: #{adduct_added.inspect}"
+        # Right now, I'm making the response sets of matched pairs, even if they have adducts... which they should?
+        # Is there a better way to feed these back?
+        #adduct_added.empty? ? mols : mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
+        selected_products
       end
     end
 
