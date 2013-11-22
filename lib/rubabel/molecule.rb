@@ -545,7 +545,7 @@ module Rubabel
     # not alter the caller.  If the molecule is already fragmented, then
     # returns the separate fragments.
     # ##!! Doesn't handle adducts, retained for backwards compatibility
-    def split(*bonds)
+    def basic_split(*bonds)
       if bonds.size > 0
         delete_and_restore_bonds(*bonds) do |mol|
           mol.ob.separate.map(&:upcast)
@@ -558,7 +558,7 @@ module Rubabel
     # splits the molecules at the given bonds and returns the fragments.  Does
     # not alter the caller.  If the molecule is already fragmented, then
     # returns the separate fragments.
-    def complex_split(*bonds)
+    def split(*bonds)
       adducts unless @adducts
       returns = []
       if bonds.size > 0
@@ -570,14 +570,22 @@ module Rubabel
       else
         mols = self.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
         mols2 = mols.map(&:dup)
-        adducts.each do |adduct|
-          mols2.each {|mol| mol.associate_atom! adduct.atoms.first }
+        mols_all = mols.map(&:dup)
+        mols3 = @adducts.map do |adduct|
+          #mols2.each {|mol| mol.associate_atom! adduct.atoms.first }
+          mols2 = mols.map(&:dup)
+          mols_all.product([adduct]).map {|mol, adduct| mol.associate_atom! adduct.atoms.first }
+          mols2.product([adduct]).map {|mol, adduct| mol.associate_atom! adduct.atoms.first }
         end
-        products = mols.product(mols2)
-        selected_products = products.select do |a,b| 
-           test_mass = a.mass + b.mass 
-           p [a,b] if (test_mass - self.mass).abs > 0.01  
-          (self.mass-a.mass - b.mass).abs < 0.01  
+#        p mols3
+#        p mols_all
+#        puts "+"*50
+#        p mols2 != mols
+        products = mols2 != mols ? mols.product(mols2) : [mols]
+        p products
+        products.delete_if do |set|
+          puts "set: #{set}"
+          set.last.ob.separate.map(&:upcast).include?(set.first)
         end
         p products
         binding.pry
@@ -585,7 +593,7 @@ module Rubabel
         # Right now, I'm making the response sets of matched pairs, even if they have adducts... which they should?
         # Is there a better way to feed these back?
         #adduct_added.empty? ? mols : mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
-        selected_products
+        products.first.is_a?(Array) ? products.flatten : products
       end
     end
 
