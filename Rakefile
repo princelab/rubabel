@@ -17,3 +17,14 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
+
+task :console do |task|
+  cmd =  'irb -r ./lib/rubabel.rb'
+  system *cmd
+end
+
+task :pry do |task|
+  require 'pry'
+  cmd = 'pry -r ./lib/rubabel.rb'
+  system *cmd
+end
