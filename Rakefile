@@ -17,3 +17,29 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
+
+
+task :console do |task|
+  cmd = [ 'irb', "-I lib/ -r './lib/rubabel.rb'" ]
+  run *cmd
+end
+
+task :pry do |task|
+  cmd = [ 'pry', "-r './lib/rubabel.rb'" ]
+  run *cmd
+end
+
+require 'rdoc/task'
+Rake::RDocTask.new do |rdoc|
+  version = File.exist?('VERSION') ? File.read('VERSION') : ""
+
+  rdoc.rdoc_dir = 'rdoc'
+  rdoc.title = "rubabel #{version}"
+  rdoc.rdoc_files.include('README*')
+  rdoc.rdoc_files.include('lib/**/*.rb')
+end
+
+## Convenience method to kick off a command
+def run *cmd
+  sh(cmd.join(" "))
+end
