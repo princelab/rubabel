@@ -48,7 +48,7 @@ describe Rubabel::Molecule do
       @mol.delete_bond(@n, @n.atoms.first)
       pieces = @mol.split
       p pieces
-      pieces.map(&:csmiles).sort.should == ["N", "OCC=O"]
+      pieces.flatten.map(&:csmiles).sort.should == ["N", "OCC=O"]
     end
     describe "Adduct Cases:"
 
@@ -69,7 +69,8 @@ describe Rubabel::Molecule do
       mol.adduct?.should be_true
       mol.delete_bond(n, n.atoms.first)
       pieces = mol.split
-      pieces.size.should == 3 # Or 4 as I move the adduct around?
+      p pieces
+      pieces.size.should == 2 # Or 4 as I move the adduct around?
       pieces.map {|a| a.size.should == 2}
     end
     it 'splits multiple breaks and single adduct' do 
@@ -87,13 +88,22 @@ describe Rubabel::Molecule do
 
     end
     it 'splits multiple breaks and multiple adducts' do 
-      pending "Do we need to handle multiple adducts?"
+      mol = Rubabel::Molecule.from_string("[Li+].NC(=O)C[O-].[Na+]")
+      num_bonds_before = mol.num_bonds
+      num_atoms_before = mol.num_atoms
+      reply = mol.split(mol.bonds.first, mol.bonds.last)
+      reply.should be_a(Array)
+      reply.first.should be_a(Array)
+      mol.num_bonds.should == num_bonds_before
+      mol.num_atoms.should == num_atoms_before
+      csmiles = reply.map {|a| a.map(&:csmiles) }.flatten
+      csmiles.sort.should == %w(N N.[Li+] N.[Na+] CC=O CC=O.[Li+] CC=O.[Na+] O O.[Li+] O.[Na+])
     end
     it 'handles the product arrays properly' do 
+      pending "Not necessary, keeping in case..."
       mol = Rubabel::Molecule.from_string("NC(=O)C[O-].[Na+]")
       reply = mol.split(mol.bonds.first, mol.bonds.last)
-      adducts = mol.adducts
-      p adducts
+      p adducts = mol.adducts
       mols = mol.ob.separate.map(&:upcast).delete_if {|a| adducts.include?(a)}
       p mols
       mols2 = mols.map(&:dup)

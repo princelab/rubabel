@@ -560,20 +560,30 @@ module Rubabel
     # returns the separate fragments.
     def split(*bonds)
       adducts unless @adducts
+     # binding.pry if bonds.size == 2
       returns = []
+      mols = []
+      mols2 = []
       if bonds.size > 0
+        puts "Ground Truth: #{basic_split(*bonds).inspect}"
         delete_and_restore_bonds(*bonds) do |mol|
           mols = mol.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
-          adduct_added = mols.product(@adducts).map {|a| Rubabel[a.join(".")] }
-          adduct_added.empty? ? mols : mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
+          puts "MOLS: #{mols.inspect}"
+          mols2 = mols.map(&:dup)
+          adduct_added = []
+          @adducts.map do |adduct| 
+            mols2.product([adduct]).map {|mol, adduct| mol.associate_atom! adduct.atoms.first }
+          end
         end
+        products = mols2 != mols ? mols.product(mols2) : [mols]
+        binding.pry 
+        products
       else
         mols = self.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
         mols2 = mols.map(&:dup)
         mols_all = mols.map(&:dup)
-        mols3 = @adducts.map do |adduct|
+        @adducts.map do |adduct|
           #mols2.each {|mol| mol.associate_atom! adduct.atoms.first }
-          mols2 = mols.map(&:dup)
           mols_all.product([adduct]).map {|mol, adduct| mol.associate_atom! adduct.atoms.first }
           mols2.product([adduct]).map {|mol, adduct| mol.associate_atom! adduct.atoms.first }
         end
@@ -582,18 +592,20 @@ module Rubabel
 #        puts "+"*50
 #        p mols2 != mols
         products = mols2 != mols ? mols.product(mols2) : [mols]
-        p products
+       # p products
         products.delete_if do |set|
           puts "set: #{set}"
           set.last.ob.separate.map(&:upcast).include?(set.first)
+          puts "set: #{set}"
         end
-        p products
-        binding.pry
+       # p products
+        #binding.pry
         #puts "adduct_added: #{adduct_added.inspect}"
         # Right now, I'm making the response sets of matched pairs, even if they have adducts... which they should?
         # Is there a better way to feed these back?
         #adduct_added.empty? ? mols : mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
-        products.first.is_a?(Array) ? products.flatten : products
+        #products.first.is_a?(Array) ? products.flatten : products
+        products
       end
     end
 
