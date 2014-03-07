@@ -6,6 +6,8 @@ require 'rubabel/atom'
 require 'rubabel/bond'
 require 'stringio'
 require 'mini_magick'
+require 'yaml'
+require 'pry'
 
 class OpenBabel::OBMol
   def upcast
@@ -81,7 +83,8 @@ module Rubabel
     DEFAULT_ID_TYPE = :pubchem
     ID_TYPES = {
       inchikey: "InChI key",
-      lmid: "LipidMaps ID"
+      lmid: "LipidMaps ID",
+      archive: "SDFs, just extracted from exported CSV"
     }
     ID_TYPE_KEYS = ID_TYPES.keys
     ADDUCTS_LEGEND = {
@@ -98,6 +101,7 @@ module Rubabel
       #name2: "[ion-]"
     }
     ADDUCTS = {}
+    LMID_ARCHIVE = File.join(__dir__, '..', '..', "sdfs.yml")
     
 
     # the OpenBabel::OBmol object
@@ -114,6 +118,26 @@ module Rubabel
         Rubabel::Molecule.new(obmol)
       end
 
+      def load_archive
+        @archive = YAML.load_file(LMID_ARCHIVE)
+      end
+      def from_archive(lmid)
+        if Rubabel::ARCHIVE # found in the archive
+          load_archive unless @archive
+          # Lookup from the archive based on the input string (AN LMID)
+          string = @archive[lmid][:structure]
+          type = :sdf
+          obmol = OpenBabel::OBMol.new
+          obconv = OpenBabel::OBConversion.new
+          obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
+          obconv.read_string(obmol, string) || raise(ArgumentError, "invalid string" )
+          resp = self.new(obmol)
+        else
+          url = "http://www.lipidmaps.org/data/LMSDRecord.php?OutputType=SDF&Mode=File&LMID=" + lmid
+          doc_string = retrieve_info_from_url(url)
+          resp = from_string(doc_string, :sdf)
+        end
+      end
       def from_string(string, type=DEFAULT_IN_TYPE)
         if type == :inchi
           string.prepend("InChI=") unless string[/^InChI=/]
@@ -135,7 +159,7 @@ module Rubabel
         info
       end
 
-      # requires an internet connection
+      # requires an internet connection unless in the archive
       def from_id(id, type=DEFAULT_ID_TYPE)
           case type
           when :inchikey
@@ -146,9 +170,7 @@ module Rubabel
             raise(ArgumentError, "did not retrieve a valid inchi string") unless inchi_string[/^InChI=/]
             from_string(inchi_string, :inchi)
           when :lmid # lipidmaps id
-            url = "http://www.lipidmaps.org/data/LMSDRecord.php?OutputType=SDF&Mode=File&LMID=" + id
-            doc_string = retrieve_info_from_url(url)
-            from_string(doc_string, :sdf)
+            from_archive(id)
           end
       end
       alias_method :from_key, :from_id

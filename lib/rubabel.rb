@@ -22,7 +22,7 @@ module Rubabel
     babel: 'babel',
     obabel: 'obabel',
   }
-
+  ARCHIVE = true
   class << self
 
     # accepts a string specifying the molecule (calling Rubabel::Molecule.from_string) 
@@ -97,6 +97,11 @@ module Rubabel
     # reads one molecule from the string
     def molecule_from_string(string, type=Rubabel::Molecule::DEFAULT_IN_TYPE)
       Rubabel::Molecule.from_string(string, type)
+    end
+
+    # reads one molecule from the archival string
+    def molecule_from_archive(lmid)
+      Rubabel::Molecule.from_archive(lmid)
     end
 
     # reads the first entry and returns the OBMol object, the OBConversion object,
