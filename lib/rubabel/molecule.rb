@@ -122,16 +122,25 @@ module Rubabel
         @archive = YAML.load_file(LMID_ARCHIVE)
       end
       def from_archive(lmid)
-        if Rubabel::ARCHIVE # found in the archive
+        if Rubabel::ARCHIVE # archive is turned on
           load_archive unless @archive
-          # Lookup from the archive based on the input string (AN LMID)
-          string = @archive[lmid][:structure]
-          type = :sdf
-          obmol = OpenBabel::OBMol.new
-          obconv = OpenBabel::OBConversion.new
-          obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
-          obconv.read_string(obmol, string) || raise(ArgumentError, "invalid string" )
-          resp = self.new(obmol)
+          if @archive[lmid]
+            # Lookup from the archive based on the input string (AN LMID)
+            string = @archive[lmid][:structure]
+            unless lmid[/^LM/]
+              lmid = lmid[/LM[A-Z]{2}\d{8,10}/]
+            end
+            type = :sdf
+            obmol = OpenBabel::OBMol.new
+            obconv = OpenBabel::OBConversion.new
+            obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
+            obconv.read_string(obmol, string) || raise(ArgumentError, "invalid string" )
+            resp = self.new(obmol)
+          else
+            url = "http://www.lipidmaps.org/data/LMSDRecord.php?OutputType=SDF&Mode=File&LMID=" + lmid
+            doc_string = retrieve_info_from_url(url)
+            resp = from_string(doc_string, :sdf)
+          end
         else
           url = "http://www.lipidmaps.org/data/LMSDRecord.php?OutputType=SDF&Mode=File&LMID=" + lmid
           doc_string = retrieve_info_from_url(url)
