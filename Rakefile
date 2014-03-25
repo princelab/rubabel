@@ -29,6 +29,14 @@ task :pry do |task|
   run *cmd
 end
 
+task :uncache do |task|
+  split_base = "split-cache"
+  destination = "sdfs.yml"
+  split_cmd = ["split", "--bytes=99m", destination, split_base]
+  cmd = ["cat", split_base + '*', ">>", destination]
+  run *cmd
+end
+
 require 'rdoc/task'
 Rake::RDocTask.new do |rdoc|
   version = File.exist?('VERSION') ? File.read('VERSION') : ""
