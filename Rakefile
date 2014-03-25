@@ -37,6 +37,9 @@ task :uncache do |task|
   run *cmd
 end
 
+task :install => [:uncache] do |task|
+end
+
 require 'rdoc/task'
 Rake::RDocTask.new do |rdoc|
   version = File.exist?('VERSION') ? File.read('VERSION') : ""
