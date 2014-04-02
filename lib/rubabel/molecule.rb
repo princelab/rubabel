@@ -6,6 +6,7 @@ require 'rubabel/atom'
 require 'rubabel/bond'
 require 'stringio'
 require 'mini_magick'
+require 'set' # Has one downside: only stores unique entries, which might be a problem later
 
 class OpenBabel::OBMol
   def upcast
@@ -92,16 +93,18 @@ module Rubabel
       hydrogen: "[H+]",
       #name: "[ion+]",
       hydride: "[H-]",
-      hydroxide: "[0H-]",
+      hydroxide: "[OH-]",
       chlorine: "[Cl-]",
       bromine: "[Br-]" #,
       #name2: "[ion-]"
     }
     ADDUCTS = {}
     
-
-    # the OpenBabel::OBmol object
+    @adducts = []
+    # the OpenBabel::OBmol object is :ob
     attr_accessor :ob
+    attr_accessor :adducts
+
 
     class << self
 
@@ -114,7 +117,9 @@ module Rubabel
         Rubabel::Molecule.new(obmol)
       end
 
-      def from_string(string, type=DEFAULT_IN_TYPE)
+
+
+      def from_string(string, type=DEFAULT_IN_TYPE, adducts: nil)
         if type == :inchi
           string.prepend("InChI=") unless string[/^InChI=/]
         end
@@ -122,7 +127,16 @@ module Rubabel
         obconv = OpenBabel::OBConversion.new
         obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
         obconv.read_string(obmol, string) || raise(ArgumentError, "invalid string" )
-        self.new(obmol)
+        ob = self.new(obmol)
+        if adducts
+          ob.adducts = Array(adducts)
+          ob.adducts = ob.adducts.map do |m| 
+            from_string(m) if m.class != Rubabel::Molecule
+          end
+        else
+          ob.find_internal_adducts(ob)
+        end
+        ob
       end
 
       def retrieve_info_from_url(url)
@@ -160,6 +174,25 @@ module Rubabel
         obj
       end
     end
+
+
+    #Code which can be used to find addcuts from molecule containing them
+    def find_internal_adducts(mol = self)
+      mol.adducts ||= []
+      splits = mol.ob.separate.map(&:upcast).flatten.each {|m| mol.adducts << m if ADDUCTS.values.include?(m) }
+      mol.adducts = mol.adducts.uniq(&:csmiles)
+      # TODO add a filter to remove the captured adducts from the molecule
+      #??? mol = mol.ob.separate.map(&:upcast).delete_if {|m| ADDUCTS.values.include?(m) }
+      mol.adducts = mol.adducts.map {|m| m.class == Rubabel::Molecule ? m : from_string(m)  }
+    end
+    def adduct?
+      self.find_internal_adducts unless @adducts
+      @adducts.size > 0
+    end
+    alias :adducts? :adduct?
+    alias :adduct :adducts
+
+
 
     # arg may be a Fixnum, a Symbol (Elemental symbol that is a Symbol), or a
     # Rubabel::Atom.  Returns the newly associated/created atom.
@@ -554,30 +587,64 @@ module Rubabel
         self.ob.separate.map(&:upcast)
       end
     end
+    # ARRGH!
+    def split(*bonds)
+      find_internal_adducts(self) if self.adducts.empty?
+      to_return = nil
+      if bonds.size > 0
+        to_return = delete_and_restore_bonds(*bonds) do |mol|
+          mol.ob.separate.map(&:upcast)
+        end
+      else
+        to_return = self.ob.separate.map(&:upcast)
+      end
+      if adducts?
+        to_return.map {|a| a.adducts = @adducts}
+      end
+      to_return
+    end
+
+    # Splits, but also provides combined 
+    def split_with_adducts(*bonds)
+      to_return = split(*bonds)
+      if adducts?
+        products = to_return.product(@adducts)#.map {|mol, adduct| mol.associate_atom! adduct.atoms.first ; mol}
+        products.map! {|mol, adduct| mol2 = mol.dup; mol2.associate_atom! adduct.atoms.first ; mol2}
+        to_return = to_return + products
+      end
+      to_return
+    end
+
 
     # splits the molecules at the given bonds and returns the fragments.  Does
     # not alter the caller.  If the molecule is already fragmented, then
     # returns the separate fragments.
-    def split(*bonds)
-      adducts unless @adducts
+    def failed_split(*bonds)
+      puts "Ground Truth: #{basic_split(*bonds).inspect}"
+      self.find_internal_adducts unless @adducts
      # binding.pry if bonds.size == 2
       returns = []
       mols = []
       mols2 = []
+      product_mols = []
       if bonds.size > 0
-        puts "Ground Truth: #{basic_split(*bonds).inspect}"
-        delete_and_restore_bonds(*bonds) do |mol|
-          mols = mol.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
-          puts "MOLS: #{mols.inspect}"
-          mols2 = mols.map(&:dup)
-          adduct_added = []
-          @adducts.map do |adduct| 
-            mols2.product([adduct]).map {|mol, adduct| mol.associate_atom! adduct.atoms.first }
-          end
+        # set apart the adducts
+        p delete_and_restore_bonds(*bonds) do |mol|
+          mol.ob.separate.map(&:upcast)
         end
-        products = mols2 != mols ? mols.product(mols2) : [mols]
-        binding.pry 
-        products
+        bonds.each do |bond|
+          delete_and_restore_bonds(bond) do |mol| 
+            mols = mol.ob.separate.map(&:upcast)
+            puts "MOLS: #{mols.inspect}"
+            mols = []
+            adducts_present = []
+            mol.ob.separate.map(&:upcast).map {|a| @adducts.include?(a) ? adducts_present << a : mols << a}
+            puts "MOLS: #{mols.inspect}"
+            product_mols << mols
+          end
+        end # bonds.each
+        puts "PMOLS: #{product_mols.inspect}"
+        mols
       else
         mols = self.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
         mols2 = mols.map(&:dup)
@@ -801,16 +868,7 @@ module Rubabel
       distance_matrix.max
     end
     ADDUCTS_LEGEND.each_pair {|name,str| ADDUCTS[name] = from_string(str)}
-    def adducts
-      @adducts ||= []
-      splits = self.ob.separate.map(&:upcast).flatten.each {|mol| @adducts << mol if ADDUCTS.values.include?(mol) }
-      @adducts = @adducts.uniq(&:csmiles)
-    end
-    def adduct?
-      self.adducts unless @adducts
-      @adducts.size > 0
-    end
-    alias :adducts? :adduct?
+
   end
 end
 
