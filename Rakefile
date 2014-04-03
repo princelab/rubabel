@@ -18,7 +18,6 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
 
-
 task :console do |task|
   cmd = [ 'irb', "-I lib/ -r './lib/rubabel.rb'" ]
   run *cmd

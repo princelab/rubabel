@@ -83,8 +83,7 @@ module Rubabel
     DEFAULT_ID_TYPE = :pubchem
     ID_TYPES = {
       inchikey: "InChI key",
-      lmid: "LipidMaps ID",
-      archive: "SDFs, just extracted from exported CSV"
+      lmid: "LipidMaps ID"
     }
     ID_TYPE_KEYS = ID_TYPES.keys
     ADDUCTS_LEGEND = {
@@ -103,9 +102,11 @@ module Rubabel
     ADDUCTS = {}
     LMID_ARCHIVE = File.join(__dir__, '..', '..', "sdfs.yml")
     
-
-    # the OpenBabel::OBmol object
+    @adducts = []
+    # the OpenBabel::OBmol object is :ob
     attr_accessor :ob
+    attr_accessor :adducts
+
 
     class << self
 
@@ -147,7 +148,11 @@ module Rubabel
           resp = from_string(doc_string, :sdf)
         end
       end
-      def from_string(string, type=DEFAULT_IN_TYPE)
+
+
+
+
+      def from_string(string, type=DEFAULT_IN_TYPE, adducts: nil)
         if type == :inchi
           string.prepend("InChI=") unless string[/^InChI=/]
         end
@@ -191,6 +196,25 @@ module Rubabel
         obj
       end
     end
+
+
+    #Code which can be used to find addcuts from molecule containing them
+    def find_internal_adducts(mol = self)
+      mol.adducts ||= []
+      splits = mol.ob.separate.map(&:upcast).flatten.each {|m| mol.adducts << m if ADDUCTS.values.include?(m) }
+      mol.adducts = mol.adducts.uniq(&:csmiles)
+      # TODO add a filter to remove the captured adducts from the molecule
+      #??? mol = mol.ob.separate.map(&:upcast).delete_if {|m| ADDUCTS.values.include?(m) }
+      mol.adducts = mol.adducts.map {|m| m.class == Rubabel::Molecule ? m : from_string(m)  }
+    end
+    def adduct?
+      self.find_internal_adducts unless @adducts
+      @adducts.size > 0
+    end
+    alias :adducts? :adduct?
+    alias :adduct :adducts
+
+
 
     # arg may be a Fixnum, a Symbol (Elemental symbol that is a Symbol), or a
     # Rubabel::Atom.  Returns the newly associated/created atom.
@@ -576,7 +600,7 @@ module Rubabel
     # not alter the caller.  If the molecule is already fragmented, then
     # returns the separate fragments.
     # ##!! Doesn't handle adducts, retained for backwards compatibility
-    def split(*bonds)
+    def basic_split(*bonds)
       if bonds.size > 0
         delete_and_restore_bonds(*bonds) do |mol|
           mol.ob.separate.map(&:upcast)
@@ -585,38 +609,92 @@ module Rubabel
         self.ob.separate.map(&:upcast)
       end
     end
+    # ARRGH!
+    def split(*bonds)
+      find_internal_adducts(self) if self.adducts.empty?
+      to_return = nil
+      if bonds.size > 0
+        to_return = delete_and_restore_bonds(*bonds) do |mol|
+          mol.ob.separate.map(&:upcast)
+        end
+      else
+        to_return = self.ob.separate.map(&:upcast)
+      end
+      if adducts?
+        to_return.map {|a| a.adducts = @adducts}
+      end
+      to_return
+    end
+
+    # Splits, but also provides combined 
+    def split_with_adducts(*bonds)
+      to_return = split(*bonds)
+      if adducts?
+        products = to_return.product(@adducts)#.map {|mol, adduct| mol.associate_atom! adduct.atoms.first ; mol}
+        products.map! {|mol, adduct| mol2 = mol.dup; mol2.associate_atom! adduct.atoms.first ; mol2}
+        to_return = to_return + products
+      end
+      to_return
+    end
+
 
     # splits the molecules at the given bonds and returns the fragments.  Does
     # not alter the caller.  If the molecule is already fragmented, then
     # returns the separate fragments.
-    def complex_split(*bonds)
-      adducts unless @adducts
+    def failed_split(*bonds)
+      puts "Ground Truth: #{basic_split(*bonds).inspect}"
+      self.find_internal_adducts unless @adducts
+     # binding.pry if bonds.size == 2
       returns = []
+      mols = []
+      mols2 = []
+      product_mols = []
       if bonds.size > 0
-        delete_and_restore_bonds(*bonds) do |mol|
-          mols = mol.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
-          adduct_added = mols.product(@adducts).map {|a| Rubabel[a.join(".")] }
-          adduct_added.empty? ? mols : mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
+        # set apart the adducts
+        p delete_and_restore_bonds(*bonds) do |mol|
+          mol.ob.separate.map(&:upcast)
         end
+        bonds.each do |bond|
+          delete_and_restore_bonds(bond) do |mol| 
+            mols = mol.ob.separate.map(&:upcast)
+            puts "MOLS: #{mols.inspect}"
+            mols = []
+            adducts_present = []
+            mol.ob.separate.map(&:upcast).map {|a| @adducts.include?(a) ? adducts_present << a : mols << a}
+            puts "MOLS: #{mols.inspect}"
+            product_mols << mols
+          end
+        end # bonds.each
+        puts "PMOLS: #{product_mols.inspect}"
+        mols
       else
         mols = self.ob.separate.map(&:upcast).delete_if {|a| @adducts.include?(a)}
         mols2 = mols.map(&:dup)
-        adducts.each do |adduct|
-          mols2.each {|mol| mol.associate_atom! adduct.atoms.first }
+        mols_all = mols.map(&:dup)
+        @adducts.map do |adduct|
+          #mols2.each {|mol| mol.associate_atom! adduct.atoms.first }
+          mols_all.product([adduct]).map {|mol, adduct| mol.associate_atom! adduct.atoms.first }
+          mols2.product([adduct]).map {|mol, adduct| mol.associate_atom! adduct.atoms.first }
         end
-        products = mols.product(mols2)
-        selected_products = products.select do |a,b| 
-           test_mass = a.mass + b.mass 
-           p [a,b] if (test_mass - self.mass).abs > 0.01  
-          (self.mass-a.mass - b.mass).abs < 0.01  
+#        p mols3
+#        p mols_all
+#        puts "+"*50
+#        p mols2 != mols
+        products = mols2 != mols ? mols.product(mols2) : [mols]
+       # p products
+        products.delete_if do |set|
+          puts "set: #{set}"
+          set.last.ob.separate.map(&:upcast).include?(set.first)
+          puts "set: #{set}"
         end
-        p products
-        binding.pry
+       # p products
+        #binding.pry
         #puts "adduct_added: #{adduct_added.inspect}"
         # Right now, I'm making the response sets of matched pairs, even if they have adducts... which they should?
         # Is there a better way to feed these back?
         #adduct_added.empty? ? mols : mols.flatten.sort_by(&:mol_wt).reverse.zip(adduct_added.sort_by(&:mol_wt))
-        selected_products
+        #products.first.is_a?(Array) ? products.flatten : products
+        products
       end
     end
 

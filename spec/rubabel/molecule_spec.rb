@@ -394,6 +394,7 @@ describe Rubabel::Molecule do
     it 'can split fragments (akin to separate)' do
       @mol.delete_bond(@n, @n.atoms.first)
       pieces = @mol.split
+      p pieces
       pieces.map(&:csmiles).sort.should == ["N", "OCC=O"]
     end
     describe "Adduct Cases:"
