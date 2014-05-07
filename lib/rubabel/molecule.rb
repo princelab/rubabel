@@ -94,7 +94,7 @@ module Rubabel
       hydrogen: "[H+]",
       #name: "[ion+]",
       hydride: "[H-]",
-      hydroxide: "[0H-]",
+      hydroxide: "[OH-]",
       chlorine: "[Cl-]",
       bromine: "[Br-]" #,
       #name2: "[ion-]"
