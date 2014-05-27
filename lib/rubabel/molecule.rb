@@ -221,7 +221,7 @@ module Rubabel
     end
     def adducts
       @adducts ||= []
-      splits = self.ob.separate.map(&:upcast).flatten.each {|mol| @adducts << mol if ADDUCTS.values.include?(mol) }
+      @adducts = @adducts.map {|m| m.class == Rubabel::Molecule ? m : Rubabel::Molecule.from_string(m)  }
       @adducts = @adducts.uniq(&:csmiles)
     end
     def adduct?
@@ -293,6 +293,13 @@ module Rubabel
     # returns the exact_mass corrected for charge gain/loss
     def mass
       @ob.get_exact_mass - (@ob.get_total_charge * Rubabel::MASS_E)
+    end
+
+    def mass_with_adduct
+      [mass].product(@adducts.map(&:mass)).map{|a| a.inject(:+) }
+    end
+    def masses_with_possible_adducts
+      [mass].product([0,@adducts.map(&:mass)].flatten).map {|a| a.inject(:+) }
     end
 
     # returns a string representation of the molecular formula.  Not sensitive
