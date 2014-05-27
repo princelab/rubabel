@@ -128,7 +128,7 @@ module Rubabel
           if @archive[lmid]
             # Lookup from the archive based on the input string (AN LMID)
             string = @archive[lmid][:structure]
-            unless lmid[/^LM/]
+            unless lmid = @archive[lmid][:lmid]
               lmid = lmid[/LM[A-Z]{2}\d{8,10}/]
             end
             type = :sdf
@@ -138,6 +138,9 @@ module Rubabel
             obconv.read_string(obmol, string) || raise(ArgumentError, "invalid string" )
             resp = self.new(obmol)
           else
+            unless lmid.size < 12
+              lmid = lmid[/LM[A-Z]{2}\d{8,10}/]
+            end
             url = "http://www.lipidmaps.org/data/LMSDRecord.php?OutputType=SDF&Mode=File&LMID=" + lmid
             doc_string = retrieve_info_from_url(url)
             resp = from_string(doc_string, :sdf)
