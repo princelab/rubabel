@@ -117,6 +117,40 @@ module Rubabel
         Rubabel::Molecule.new(obmol)
       end
 
+      def load_archive
+        @archive = YAML.load_file(LMID_ARCHIVE)
+      end
+      def from_archive(lmid)
+        if Rubabel::ARCHIVE # archive is turned on
+          load_archive unless @archive
+          if @archive[lmid]
+            # Lookup from the archive based on the input string (AN LMID)
+            string = @archive[lmid][:structure]
+            unless lmid = @archive[lmid][:lmid]
+              lmid = lmid[/LM[A-Z]{2}\d{8,10}/]
+            end
+            type = :sdf
+            obmol = OpenBabel::OBMol.new
+            obconv = OpenBabel::OBConversion.new
+            obconv.set_in_format(type.to_s) || raise(ArgumentError, "invalid format #{type}")
+            obconv.read_string(obmol, string) || raise(ArgumentError, "invalid string" )
+            resp = self.new(obmol)
+          else
+            unless lmid.size < 12
+              lmid = lmid[/LM[A-Z]{2}\d{8,10}/]
+            end
+            url = "http://www.lipidmaps.org/data/LMSDRecord.php?OutputType=SDF&Mode=File&LMID=" + lmid
+            doc_string = retrieve_info_from_url(url)
+            resp = from_string(doc_string, :sdf)
+          end
+        else
+          url = "http://www.lipidmaps.org/data/LMSDRecord.php?OutputType=SDF&Mode=File&LMID=" + lmid
+          doc_string = retrieve_info_from_url(url)
+          resp = from_string(doc_string, :sdf)
+        end
+      end
+
+
 
 
       def from_string(string, type=DEFAULT_IN_TYPE, adducts: nil)
@@ -184,6 +218,11 @@ module Rubabel
       # TODO add a filter to remove the captured adducts from the molecule
       #??? mol = mol.ob.separate.map(&:upcast).delete_if {|m| ADDUCTS.values.include?(m) }
       mol.adducts = mol.adducts.map {|m| m.class == Rubabel::Molecule ? m : from_string(m)  }
+    end
+    def adducts
+      @adducts ||= []
+      splits = self.ob.separate.map(&:upcast).flatten.each {|mol| @adducts << mol if ADDUCTS.values.include?(mol) }
+      @adducts = @adducts.uniq(&:csmiles)
     end
     def adduct?
       self.find_internal_adducts unless @adducts
