@@ -153,7 +153,7 @@ module Rubabel
 
 
 
-      def from_string(string, type=DEFAULT_IN_TYPE, adducts: nil)
+      def from_string(string, type=DEFAULT_IN_TYPE, adducts=nil)
         if type == :inchi
           string.prepend("InChI=") unless string[/^InChI=/]
         end
